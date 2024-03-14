@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  UBI8_IMAGE: "ghcr.io/sandialabs/opencsp:latest-ubi8"
+  UBI8_IMAGE: "ghcr.io/e10harvey/opencsp:latest-ubi8"
   
 jobs:
   ubi8-image:
@@ -45,7 +45,7 @@ jobs:
       packages: read
       contents: read
     container: 
-      image: ghcr.io/sandialabs/opencsp:latest-ubi8
+      image: ghcr.io/e10harvey/opencsp:latest-ubi8
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
