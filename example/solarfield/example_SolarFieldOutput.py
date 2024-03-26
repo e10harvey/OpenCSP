@@ -906,7 +906,7 @@ def example_driver():
     example_object.solar_field_h_outlines()
     example_object.annotated_solar_field()
     example_object.solar_field_subset()
-    # TODO: fix image diff: example_object.heliostat_vector_field()
+    example_object.heliostat_vector_field()
     example_object.dense_vector_field()
     lt.info('All tests complete.')
     # Cleanup.
