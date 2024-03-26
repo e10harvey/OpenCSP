@@ -55,7 +55,7 @@ def example_driver():
     # Set up logger
     lt.logger(join(save_path, 'log.txt'))
 
-    example_run_camera_position_calibration(save_path)
+    run_camera_position_calibration(save_path)
 
 
 if __name__ == '__main__':

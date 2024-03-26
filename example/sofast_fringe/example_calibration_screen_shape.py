@@ -74,7 +74,7 @@ def example_driver():
     # Set up logger
     lt.logger(join(save_path, 'log.txt'), lt.log.INFO)
 
-    example_run_screen_shape_calibration(save_path)
+    run_screen_shape_calibration(save_path)
 
 
 if __name__ == '__main__':
