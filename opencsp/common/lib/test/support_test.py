@@ -219,7 +219,7 @@ def save_and_check_image(
         verify_output_files_match_expected(files_created, actual_output_dir, expected_output_dir)
 
 
-def compare_actual_expected_images(actual_location: str, expected_location: str, tolerance=0.3):
+def compare_actual_expected_images(actual_location: str, expected_location: str, tolerance=0.2):
     return mplt.compare_images(expected_location, actual_location, tolerance)
 
 
