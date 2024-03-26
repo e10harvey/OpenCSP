@@ -2,12 +2,8 @@ name: github-UBI8-NIGHTLY
 
 on:
   push
-  #pull_request:
-  #  paths-ignore:
-  #  - '**/*.rst'
-  #  - '**/*.md'
-  #  - 'doc/**'
-  #  types: [ opened, reopened, synchronize ]
+  #schedule:
+  #  - cron: '00 00 * * *'
 
 permissions:
   contents: none
