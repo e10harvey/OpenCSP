@@ -10,7 +10,7 @@ import opencsp.common.lib.tool.file_tools as ft
 import opencsp.common.lib.tool.log_tools as lt
 
 
-def example_scene_reconstruction(save_dir: str):
+def scene_reconstruction(save_dir):
     """Example script that reconstructs the XYZ locations of Aruco markers in a scene."""
     # Define input directory
     dir_input = join(opencsp_code_dir(), 'app/scene_reconstruction/test/data/data_measurement')

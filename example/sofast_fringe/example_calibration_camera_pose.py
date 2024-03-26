@@ -11,7 +11,7 @@ import opencsp.common.lib.tool.file_tools as ft
 import opencsp.common.lib.tool.log_tools as lt
 
 
-def example_run_camera_position_calibration(save_dir: str):
+def run_camera_position_calibration(save_dir):
     """Calibrates the position of the Sofast camera. Saves the rvec/tvec that
     define the relative pose of the camera/screen to a CSV file located
     at ./data/output/camera_rvec_tvec.csv
