@@ -47,7 +47,7 @@ def example_run_camera_position_calibration(save_dir: str):
     cal.save_data_as_csv(join(save_dir, 'camera_rvec_tvec.csv'))
 
 
-if __name__ == '__main__':
+def example_driver():
     # Define save dir
     save_path = join(dirname(__file__), 'data/output/camera_pose')
     ft.create_directories_if_necessary(save_path)
@@ -56,3 +56,7 @@ if __name__ == '__main__':
     lt.logger(join(save_path, 'log.txt'))
 
     example_run_camera_position_calibration(save_path)
+
+
+if __name__ == '__main__':
+    example_driver()
