@@ -1,4 +1,4 @@
-name: github-UBI8
+name: github-UBI8-NIGHTLY
 
 on:
   push
