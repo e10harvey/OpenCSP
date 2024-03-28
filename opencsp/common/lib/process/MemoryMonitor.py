@@ -76,7 +76,7 @@ class MemoryMonitor:
 #        while self._start_datetime == None:
 #            time.sleep(0.1)
 
-        while not self._future.done() and self._proc.is_alive():
+        while not self._future.done():
             time.sleep(0.1)
 
         return True
