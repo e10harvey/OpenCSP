@@ -137,6 +137,7 @@ class MemoryMonitor:
             # print("-", end="")
             elapsed = time.time() - start_time
             if (elapsed > self._max_lifetime_seconds + 3) or self._stop_sig.is_set():
+                print(".")
                 self._proc.terminate()
             time.sleep(0.1)
         self._process_finished = True
@@ -152,11 +153,13 @@ class MemoryMonitor:
             self._min_max_avg_free[0] = min(self._min_max_avg_free[0], sys_free)
             self._min_max_avg_free[1] = max(self._min_max_avg_free[1], sys_free)
             self._min_max_avg_free[2] += sys_free
+            print("x")
 
         if len(self._log) > 0:
             self._min_max_avg_usage[2] /= len(self._log)
             self._min_max_avg_free[2] /= len(self._log)
         self._end_datetime = datetime.datetime.now()
+        print("thread done.")
 
     def min_usage(self):
         """Returns the minimum memory usage while the monitor was running, in GB."""
