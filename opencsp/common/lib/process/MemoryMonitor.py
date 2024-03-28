@@ -71,11 +71,12 @@ class MemoryMonitor:
         # start the process
         executor = concurrent.futures.ThreadPoolExecutor(1, "mem_monitor_" + self.identifier)
         self._future = executor.submit(self._run)
-        while self._start_datetime == None:
-            time.sleep(0.1)
-        while self._end_datetime == None:
-            if self._proc != None and self._proc.is_alive():
-                break
+
+# Not sure what the purpose of this loop is. _run sets _start_datetime upon entry
+#        while self._start_datetime == None:
+#            time.sleep(0.1)
+
+        while not self._future.done() and self._proc.is_alive():
             time.sleep(0.1)
 
         return True
@@ -112,6 +113,7 @@ class MemoryMonitor:
         """Returns true when the return value of the monitoring subprocess has stopped."""
         return self._end_datetime != None
 
+    # TODO: Why is this executed in another thread???
     def _run(self):
         self._stop_sig.clear()
         self._start_datetime = datetime.datetime.now()
@@ -134,12 +136,11 @@ class MemoryMonitor:
         while self._proc.is_alive():
             # print("-", end="")
             elapsed = time.time() - start_time
-            if elapsed > self._max_lifetime_seconds + 3:
+            if (elapsed > self._max_lifetime_seconds + 3) or self._stop_sig.is_set():
                 self._proc.terminate()
-            if self._stop_sig.is_set():
-                break
             time.sleep(0.1)
         self._process_finished = True
+
 
         while not queue.empty():
             elapsed, sys_tot, sys_used, sys_free = queue.get()
