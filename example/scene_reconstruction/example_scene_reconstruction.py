@@ -1,6 +1,7 @@
 from os.path import join, dirname
 
 import numpy as np
+import argparse
 
 from opencsp.app.scene_reconstruction.lib.SceneReconstruction import SceneReconstruction
 from opencsp.common.lib.camera.Camera import Camera
@@ -10,10 +11,10 @@ import opencsp.common.lib.tool.file_tools as ft
 import opencsp.common.lib.tool.log_tools as lt
 
 
-def scene_reconstruction(save_dir):
+def scene_reconstruction(save_dir, input_dir):
     """Example script that reconstructs the XYZ locations of Aruco markers in a scene."""
     # Define input directory
-    dir_input = join(opencsp_code_dir(), 'app/scene_reconstruction/test/data/data_measurement')
+    dir_input = input_dir
 
     # Load components
     camera = Camera.load_from_hdf(join(dir_input, 'camera.h5'))
@@ -45,7 +46,7 @@ def scene_reconstruction(save_dir):
         fig.savefig(join(save_dir, fig.get_label() + '.png'))
 
 
-def example_driver():
+def example_driver(input_dir):
     # Define output directory
     save_path = join(dirname(__file__), 'data/output/scene_reconstruction')
     ft.create_directories_if_necessary(save_path)
@@ -53,8 +54,20 @@ def example_driver():
     # Set up logger
     lt.logger(join(save_path, 'log.txt'), lt.log.INFO)
 
-    scene_reconstruction(save_path)
+    scene_reconstruction(save_path, input_dir)
 
 
 if __name__ == '__main__':
-    example_driver()
+    parser = argparse.ArgumentParser(
+        prog='example_scene_reconstruction',
+        description='Example script that reconstructs the XYZ locations of Aruco markers in a scene',
+    )
+    input_dir_default = join(opencsp_code_dir(), 'app/scene_reconstruction/test/data/data_measurement')
+    parser.add_argument(
+        '--input_dir',
+        default=input_dir_default,
+        help='The input directory containing: camera.h5, known_point_locations.csv, aruco_marker_images/, point_pair_distances.csv, and alignment_points.csv.',
+    )
+
+    parser_args = parser.parse_args()
+    example_driver(parser_args.input_dir)
