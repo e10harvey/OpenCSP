@@ -53,11 +53,7 @@ def test_docstrings_exist_for_methods():
         opencsp.app.sofast.lib.SystemSofastFringe.SystemSofastFringe,
         SofastGUI,
     ]
-    target_class_list = [
-        target_color,
-        target_color_polar,
-        opencsp.app.target.target_color.lib.ImageColor,
-    ]
+    target_class_list = [target_color, target_color_polar, opencsp.app.target.target_color.lib.ImageColor]
     camera_calibration_class_list = [
         opencsp.app.camera_calibration.lib.calibration_camera,
         opencsp.app.camera_calibration.lib.image_processing,
