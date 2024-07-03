@@ -10,9 +10,6 @@ from opencsp.app.sofast.SofastGUI import SofastGUI
 from opencsp.app.sofast.lib import *
 
 # from opencsp.app.target.target_color.target_color_2d_gradient import target_color_2d_gradient
-import opencsp.app.target.target_color.target_color_bullseye_error as target_color_bullseye_error
-import opencsp.app.target.target_color.target_color_bullseye as target_color_bullseye
-import opencsp.app.target.target_color.target_color_one_color as target_color_one_color
 import opencsp.app.target.target_color.target_color_polar as target_color_polar
 import opencsp.app.target.target_color.target_color as target_color
 
@@ -58,9 +55,6 @@ def test_docstrings_exist_for_methods():
     ]
     target_class_list = [
         target_color,
-        target_color_bullseye,
-        target_color_bullseye_error,
-        target_color_one_color,
         target_color_polar,
         opencsp.app.target.target_color.lib.ImageColor,
     ]
