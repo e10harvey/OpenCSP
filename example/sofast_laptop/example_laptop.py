@@ -47,6 +47,12 @@ from opencsp.common.lib.deflectometry.Surface2DParabolic import Surface2DParabol
 from opencsp.common.lib.geometry.Uxyz import Uxyz
 from opencsp.common.lib.geometry.Vxyz import Vxyz
 from opencsp.common.lib.opencsp_path.opencsp_root_path import opencsp_code_dir
+import opencsp.common.lib.render.lib.PowerpointImage as pi
+import opencsp.common.lib.render.lib.PowerpointText as pt
+import opencsp.common.lib.render.PowerpointSlide as ps
+import opencsp.common.lib.render_control.RenderControlFigure as rcf
+import opencsp.common.lib.render_control.RenderControlPowerpointPresentation as rcpp
+import opencsp.common.lib.render_control.RenderControlPowerpointSlide as rcps
 import opencsp.common.lib.tool.file_tools as ft
 import opencsp.common.lib.tool.log_tools as lt
 import numpy as np
@@ -242,6 +248,14 @@ def example_laptop():
     # Create standard output plots
     plots.plot()
 
+    # Create power point presentation
+    presentation = rcpp.RenderControlPowerpointPresentation()
+    slide_control = rcps.RenderControlPowerpointSlide()
+    images = [pi.PowerpointImage(join(dir_save_cur, "Slope_X_measured_xy.png"))]
+    texts = [pt.PowerpointText("slope x measured")]
+    slide = ps.PowerpointSlide(slide_control, images, texts)
+    presentation.add_slide(slide)
+    presentation.save(dir_save_cur)
 
 if __name__ == '__main__':
     example_laptop()

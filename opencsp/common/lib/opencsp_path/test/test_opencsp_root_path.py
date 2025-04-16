@@ -59,7 +59,7 @@ class test_opencsp_root_path(unittest.TestCase):
 
     def test_opencsp_scratch_dir(self):
         """Just test that the opencsp_scratch_dir() method works. TODO actually test the returned value."""
-        self.assertIn("scratch", orp.opencsp_scratch_dir())
+        self.assertIn("tmp", orp.opencsp_scratch_dir())
 
     def test_opencsp_cache_dir(self):
         """Just test that the opencsp_cache_dir() method works. TODO actually test the returned value."""
