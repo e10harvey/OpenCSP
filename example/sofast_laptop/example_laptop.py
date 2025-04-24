@@ -251,11 +251,12 @@ def example_laptop():
     # Create power point presentation
     presentation = rcpp.RenderControlPowerpointPresentation()
     slide_control = rcps.RenderControlPowerpointSlide()
-    images = [pi.PowerpointImage(join(dir_save_cur, "Slope_X_measured_xy.png"))]
+    images = [pi.PowerpointImage(join(dir_save_cur, "Slope_X_measured_xy.png"), dims=(0.0, 0.0, 950.0, 790.0))]
     texts = [pt.PowerpointText("slope x measured")]
     slide = ps.PowerpointSlide(slide_control, images, texts)
     presentation.add_slide(slide)
-    presentation.save(dir_save_cur)
+    presentation.save(join(dir_save_cur, "example_laptop.pptx"))
+
 
 if __name__ == '__main__':
     example_laptop()
