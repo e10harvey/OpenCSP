@@ -1,7 +1,4 @@
-"""
-
-
-"""
+""" """
 
 from typing import Iterable
 
@@ -19,6 +16,7 @@ class RenderControlEnsemble:
     """
 
     def __init__(self, default_style):
+
         super(RenderControlEnsemble, self).__init__()
 
         self.default_style = default_style

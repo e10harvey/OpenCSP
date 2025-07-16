@@ -65,19 +65,30 @@ class _VideoToFramesIterable(_IndexableIterable):
 
 
 class ImagesIterable(Iterable[CacheableImage]):
-    def __init__(self, stream: Callable[[int], CacheableImage] | list[str | CacheableImage] | vh.VideoHandler):
-        """A restartable iterable that returns one image at a time, for as long as images are still available.
+    """
+    A restartable iterable that returns one image at a time, for as long as images are still available.
 
-        Iterates over an iterator or callable that returns one image at a time.
-        Calling iter() on this instance forces iter() calls to all contained
-        iterators.
+    Iterates over an iterator or callable that returns one image at a time.
+    Calling iter() on this instance forces iter() calls to all contained
+    iterators.
+    """
+
+    def __init__(self, stream: Callable[[int], CacheableImage] | list[str | CacheableImage] | vh.VideoHandler):
+        """
+        Initializes the ImagesIterable with the provided stream.
 
         Parameters
         ----------
-        stream : Callable[[int],CacheableImage] | list[str|CacheableImage] | vh.VideoHandler
-            The stream to iterate over. If a callable, then will be passed the
-            current iteration index as an argument.
+        stream : Callable[[int], CacheableImage] | list[str | CacheableImage] | vh.VideoHandler
+            The stream of images to iterate over. If a callable, then will be passed
+            the current iteration index as an argument.
+
+        Raises
+        ------
+        TypeError
+            If the provided stream is not one of the supported types.
         """
+        # "ChatGPT 4o-mini" assisted with generating this docstring.
         if isinstance(stream, _IndexableIterable):
             self._images_iterable = stream
         elif isinstance(stream, vh.VideoHandler):
@@ -92,7 +103,7 @@ class ImagesIterable(Iterable[CacheableImage]):
         else:
             lt.error_and_raise(
                 TypeError,
-                f"Error in ImagesStream(): argument \"stream\" should be an iterator, callable, or list, but is instead of type \"{type(stream)}\"",
+                f'Error in ImagesStream(): argument "stream" should be an iterator, callable, or list, but is instead of type "{type(stream)}"',
             )
         self._curr_iter_images: list[CacheableImage] = []
 
@@ -110,4 +121,13 @@ class ImagesIterable(Iterable[CacheableImage]):
         return ret
 
     def to_list(self) -> list[CacheableImage]:
+        """
+        Converts the iterable to a list of images.
+
+        Returns
+        -------
+        list[CacheableImage]
+            A list containing all images from the iterable.
+        """
+        # "ChatGPT 4o-mini" assisted with generating this docstring.
         return [img for img in self._images_iterable]

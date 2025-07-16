@@ -44,6 +44,7 @@ class CsvInterface:
         file_name: str,
         error_if_dir_not_exist: bool = True,
         rows: Optional[list["CsvInterface"]] = None,
+        overwrite=False,
     ):
         """Create a csv file with a header and one or more lines (one line per contained instance if this is a collection of CsvInterface objects).
 
@@ -55,7 +56,7 @@ class CsvInterface:
         # get the data lines
         row_strs: list[str | "CsvInterface"] = []
         if rows == None:
-            if hasattr(self, 'rows'):
+            if hasattr(self, "rows"):
                 if callable(self.rows):
                     rows = self.rows()
                 else:
@@ -84,6 +85,7 @@ class CsvInterface:
             error_if_dir_not_exist=error_if_dir_not_exist,
             heading_line=header_str,
             data_lines=row_strs,
+            overwrite=overwrite,
         )
 
     @classmethod

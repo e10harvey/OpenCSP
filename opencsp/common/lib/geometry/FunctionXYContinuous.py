@@ -42,6 +42,9 @@ class FunctionXYContinuous(FunctionXYAbstract):
     # def interpolate() -> FunctionXYAnalytic:
     #     ...
 
+    def __repr__(self) -> str:
+        return self.func_string
+
     # override
     def value_at(self, x: float, y: float) -> float:
         return self.func(x, y)
@@ -62,7 +65,7 @@ class FunctionXYContinuous(FunctionXYAbstract):
         raise NotImplementedError
 
     def draw(self, view: View3d, functionXY_style):
-        if view.view_spec['type'] == 'image':
+        if view.view_spec["type"] == "image":
             # X, Y = np.meshgrid(self.x_domain, self.y_domain)
             arr = np.zeros((len(self.y_domain), len(self.x_domain)))
             for ix, x in enumerate(sorted(self.x_domain)):
@@ -71,7 +74,7 @@ class FunctionXYContinuous(FunctionXYAbstract):
             # A = self.as_callable()(X,Y)
             extent = [min(self.x_domain), max(self.x_domain), min(self.y_domain), max(self.y_domain)]
             # view.pcolormesh(list(self.x_domain), list(self.y_domain), arr, colorbar=True, cmap='jet', )
-            view.imshow(arr, colorbar=True, cmap='jet')
+            view.imshow(arr, colorbar=True, cmap="jet")
 
     @classmethod
     def from_array(cls, x_domain: np.ndarray, y_domain: np.ndarray, values: np.ndarray):

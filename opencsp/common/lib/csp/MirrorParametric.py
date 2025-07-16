@@ -15,6 +15,7 @@ from opencsp.common.lib.geometry.Pxyz import Pxyz
 from opencsp.common.lib.geometry.RegionXY import RegionXY
 from opencsp.common.lib.geometry.Vxyz import Vxyz
 from opencsp.common.lib.geometry.Vxy import Vxy
+from opencsp.common.lib.geometry.FunctionXYContinuous import FunctionXYContinuous
 
 
 class MirrorParametric(MirrorAbstract):
@@ -24,7 +25,7 @@ class MirrorParametric(MirrorAbstract):
 
     def __init__(
         self, surface_function: Callable[[np.ndarray, np.ndarray], np.ndarray], shape: RegionXY
-    ) -> 'MirrorParametric':
+    ) -> "MirrorParametric":
         """Instantiates MirrorParametric class
 
         Parameters
@@ -40,11 +41,13 @@ class MirrorParametric(MirrorAbstract):
         """
         super().__init__(shape)  # initalizes the attributes universal to all mirrors
 
-        # Define surface z and surface normal vector functions
+        # Define surface z and surface normal vector functions.
         self._surface_function = surface_function
         self._normals_function = self._define_normals_function(surface_function)
 
     def __repr__(self) -> str:
+        if isinstance(self._surface_function, FunctionXYContinuous):
+            return f"Parametricly defined mirror defined by the function {self._surface_function}"
         return (
             f"Parametricly defined mirror defined by the function {inspect.getsourcelines(self._surface_function)[0]}"
         )
@@ -64,8 +67,8 @@ class MirrorParametric(MirrorAbstract):
             Normal vector function
         """
         # Create X/Y symbolic variables
-        x_s = Symbol('x')
-        y_s = Symbol('y')
+        x_s = Symbol("x")
+        y_s = Symbol("y")
 
         # Take derivative of surface function in X and Y
         sym_func = surface_function(x_s, y_s)
@@ -73,8 +76,8 @@ class MirrorParametric(MirrorAbstract):
         dfdy = diff(sym_func, y_s)
 
         # Evaluate function at XY coordinates
-        func_dfdx = lambdify([x_s, y_s], dfdx, 'numpy')
-        func_dfdy = lambdify([x_s, y_s], dfdy, 'numpy')
+        func_dfdx = lambdify([x_s, y_s], dfdx, "numpy")
+        func_dfdy = lambdify([x_s, y_s], dfdy, "numpy")
 
         def _normals_function(x: np.ndarray, y: np.ndarray) -> np.ndarray:
             """Returns normal vectors for given xy points
@@ -109,7 +112,7 @@ class MirrorParametric(MirrorAbstract):
 
     def surface_norm_at(self, p: Pxy) -> Vxyz:
         if not issubclass(type(p), Vxy):
-            raise TypeError(f'Sample point must be type {Vxy}, not type {type(p)}')
+            raise TypeError(f"Sample point must be type {Vxy}, not type {type(p)}")
         self._check_in_bounds(p)
         pts = self._normals_function(p.x, p.y)
         return Vxyz(pts.T).normalize()
@@ -119,7 +122,7 @@ class MirrorParametric(MirrorAbstract):
         return self._surface_function(p.x, p.y)
 
     @classmethod
-    def generate_symmetric_paraboloid(cls, focal_length: float, shape: RegionXY) -> 'MirrorParametric':
+    def generate_symmetric_paraboloid(cls, focal_length: float, shape: RegionXY) -> "MirrorParametric":
         """Generate a symmetric parabolic mirror with the given focal length
 
         Parameters
@@ -142,7 +145,7 @@ class MirrorParametric(MirrorAbstract):
         return cls(surface_function, shape)
 
     @classmethod
-    def generate_flat(cls, shape: RegionXY) -> 'MirrorParametric':
+    def generate_flat(cls, shape: RegionXY) -> "MirrorParametric":
         """Generate a flat, z=0 mirror
 
         Parameters

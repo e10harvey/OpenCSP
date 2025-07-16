@@ -4,7 +4,7 @@ import numpy as np
 
 from opencsp.common.lib.geometry.Pxy import Pxy
 from opencsp.common.lib.geometry.RegionXY import RegionXY
-from opencsp.common.lib.render.color import Color
+import opencsp.common.lib.render.Color as cl
 from opencsp.common.lib.render_control.RenderControlMirror import RenderControlMirror
 import opencsp.common.lib.target.target_image as ti
 import opencsp.common.lib.tool.unit_conversion as uc
@@ -28,7 +28,8 @@ class TargetAbstract(ABC):
         # Construct image object.
         self.image = ti.construct_target_image(self.image_width, self.image_height, self.dpm)
         # Set initial pattern.
-        self.pattern_description = 'blank'  # ?? SCAFFOLDING RCB -- RENAME THIS VARIABLE TO "NAME"?  SEE splice_targets_above_below() FOR MAYBE REASON WHY
+        # ?? SCAFFOLDING RCB -- RENAME THIS VARIABLE TO "NAME"?  SEE splice_targets_above_below() FOR MAYBE REASON WHY
+        self.pattern_description = "blank"
 
     # ACCESS
 
@@ -44,29 +45,29 @@ class TargetAbstract(ABC):
         return n_rows, n_cols, n_bands
 
     def image_size_str_meter(self) -> str:
-        return 'w{w:.3f}m_h{h:.3f}m_{dpm:.1f}dpm'.format(w=self.image_width, h=self.image_height, dpm=round(self.dpm))
+        return "w{w:.3f}m_h{h:.3f}m_{dpm:.1f}dpm".format(w=self.image_width, h=self.image_height, dpm=round(self.dpm))
 
     def image_size_str_inch(self) -> str:
-        return 'w{w:.3f}in_h{h:.3f}in_{dpi:d}dpi'.format(
+        return "w{w:.3f}in_h{h:.3f}in_{dpi:d}dpi".format(
             w=uc.meter_to_inch(self.image_width),
             h=uc.meter_to_inch(self.image_height),
             dpi=round(uc.dpm_to_dpi(self.dpm)),
         )
 
     def description_meter(self) -> str:
-        return self.pattern_description + '__' + self.image_size_str_meter()
+        return self.pattern_description + "__" + self.image_size_str_meter()
 
     def description_inch(self) -> str:
-        return self.pattern_description + '__' + self.image_size_str_inch()
+        return self.pattern_description + "__" + self.image_size_str_inch()
 
     # MODIFICATION
 
     def set_pattern_description(self, description: str) -> None:
-        self.pattern_description = 'blank'
+        self.pattern_description = "blank"
 
     # ?? SCAFFOLDING RCB -- ASK TRISTAN ABOUT THIS
     # @abstractmethod   # ?? SCAFFOLDING RCB -- FILL THIS IN
-    # def color_at(self, p:Pxy) -> Color:
+    # def color_at(self, p:Pxy) -> cl.Color:
     #     """
     #     Gives the color of the point on the target
 
@@ -79,7 +80,7 @@ class TargetAbstract(ABC):
 
     #     Returns
     #     -------
-    #     color : Color
+    #     color : cl.Color
     #         Image content at the point (x, y)
     #     """
     #     ...
@@ -141,15 +142,7 @@ class TargetAbstract(ABC):
     #     """
     #     # Sets facet's position given heliostat configuration.
     #     # self.origin = np.array(fac_origin) + fac_rotation.dot(fac_origin)
-    #     if not issubclass(type(fac_origin), Vxyz): # TODO tjlarki: ensure the facet origin is a Vxyz so this check becomes redundant
+    #     if not issubclass(type(fac_origin), Vxyz):
     #         fac_origin = Pxyz(fac_origin)
     #     self.origin = fac_origin
     #     self.rotation = fac_rotation
-
-    #     # TODO tjlarki: experimental feature, Auto Comenting
-    #     # self.add_comment(f"Set the position of the mirror to {list(self.origin)} with a global rotation of {list(self.rotation.as_rotvec())} (rotation given as a rotation vector).")
-    #     return
-
-    # TODO tjlarki: experimental feature, Auto Comenting
-    def add_comment(self, comment: str):
-        self.comments.append(f"\t{comment}")

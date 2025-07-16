@@ -1,5 +1,4 @@
-"""Tests projecting a test dot pattern onto a screen
-"""
+"""Tests projecting a test dot pattern onto a screen"""
 
 import os
 import unittest
@@ -26,7 +25,7 @@ class TestProjectFixedPatternTarget(unittest.TestCase):
             width_pattern=3,
             spacing_pattern=6,
         )
-        image = fixed_pattern.get_image('uint8', 255, 'square')
+        image = fixed_pattern.get_image("uint8", 255, "square")
 
         # Project image
         im_proj.display_image_in_active_area(image)
@@ -34,5 +33,5 @@ class TestProjectFixedPatternTarget(unittest.TestCase):
         im_proj.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

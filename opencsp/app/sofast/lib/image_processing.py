@@ -55,13 +55,18 @@ def calc_mask_raw(
         # Calculate histogram of delta image
         hist, edges = np.histogram(delta.flatten(), bins=N_BINS_IMAGE, density=True)
 
+        # Make sure first and last values of histogram are zero
+        hist = np.concatenate([[0], hist, [0]])
+        bin_step = edges[1] - edges[0]
+        edges = np.concatenate([[edges[0] - bin_step], edges, [edges[-1] + bin_step]])
+
         # Find two peaks in histogram (light and dark regions)
         for dist in np.arange(N_PEAK_STEP, N_BINS_IMAGE, N_PEAK_STEP):
             peaks = find_peaks(x=hist, height=HIST_PEAK_THRESH, distance=dist)[0]
             if len(peaks) == 2:
                 break
         if len(peaks) != 2:
-            raise ValueError('Not enough distinction between dark and light pixels in mask images.')
+            raise ValueError("Not enough distinction between dark and light pixels in mask images.")
 
         # Calculate minimum between two peaks
         idx_hist_min = np.argmin(hist[peaks[0] : peaks[1]]) + peaks[0]
@@ -84,7 +89,7 @@ def calc_mask_raw(
     # Check for enough active pixels
     thresh_active_pixels = int(mask_raw.size * thresh_active_pixels)
     if mask_raw.sum() < thresh_active_pixels:
-        lt.error_and_raise(ValueError, f'Mask contains less than {thresh_active_pixels:d} active pixels.')
+        lt.error_and_raise(ValueError, f"Mask contains less than {thresh_active_pixels:d} active pixels.")
 
     # Return raw, unprocessed mask
     return mask_raw

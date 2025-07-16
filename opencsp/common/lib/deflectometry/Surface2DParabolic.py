@@ -9,6 +9,8 @@ from opencsp.common.lib.tool.hdf5_tools import save_hdf5_datasets, load_hdf5_dat
 
 
 class Surface2DParabolic(Surface2DAbstract):
+    """Representation of 2D fit parabolic surface."""
+
     def __init__(self, initial_focal_lengths_xy: tuple[float, float], robust_least_squares: bool, downsample: int):
         """
         Representation of 2D fit parabolic surface.
@@ -131,7 +133,7 @@ class Surface2DParabolic(Surface2DAbstract):
         mean_2 = scale_2.mean()
 
         if mean_1 < 0 and mean_2 < 0:
-            raise ValueError('Camera ray intersection points with parabolic surface are found to be behind camera.')
+            raise ValueError("Camera ray intersection points with parabolic surface are found to be behind camera.")
         elif mean_1 > 0 and mean_2 > 0:  # Default to use scale 1
             scale = scale_1
         elif mean_2 > 0:
@@ -270,28 +272,48 @@ class Surface2DParabolic(Surface2DAbstract):
         self.v_screen_points_optic += v_align_optic_step
         self.v_optic_screen_optic += v_align_optic_step
 
-    def save_to_hdf(self, file: str, prefix: str = ''):
-        data = [self.initial_focal_lengths_xy, self.robust_least_squares, self.downsample, 'parabolic']
+    def save_to_hdf(self, file: str, prefix: str = ""):
+        """Saves data to given file. Data is stored as: PREFIX + ParamsSurface/Field_1
+
+        Parameters
+        ----------
+        file : str
+            HDF file to save to
+        prefix : str, optional
+            Prefix to append to folder path within HDF file (folders must be separated by "/").
+            Default is empty string ''.
+        """
+        data = [self.initial_focal_lengths_xy, self.robust_least_squares, self.downsample, "parabolic"]
         datasets = [
-            prefix + 'ParamsSurface/initial_focal_lengths_xy',
-            prefix + 'ParamsSurface/robust_least_squares',
-            prefix + 'ParamsSurface/downsample',
-            prefix + 'ParamsSurface/surface_type',
+            prefix + "ParamsSurface/initial_focal_lengths_xy",
+            prefix + "ParamsSurface/robust_least_squares",
+            prefix + "ParamsSurface/downsample",
+            prefix + "ParamsSurface/surface_type",
         ]
         save_hdf5_datasets(data, datasets, file)
 
     @classmethod
-    def load_from_hdf(cls, file: str, prefix: str = ''):
+    def load_from_hdf(cls, file: str, prefix: str = ""):
+        """Loads data from given file. Assumes data is stored as: PREFIX + ParamsSurface/Field_1
+
+        Parameters
+        ----------
+        file : str
+            HDF file to load from
+        prefix : str, optional
+            Prefix to append to folder path within HDF file (folders must be separated by "/").
+            Default is empty string ''.
+        """
         # Check surface type
-        data = load_hdf5_datasets([prefix + 'ParamsSurface/surface_type'], file)
-        if data['surface_type'] != 'parabolic':
+        data = load_hdf5_datasets([prefix + "ParamsSurface/surface_type"], file)
+        if data["surface_type"] != "parabolic":
             raise ValueError(f'Surface2DParabolic cannot load surface type, {data["surface_type"]:s}')
 
         # Load
         datasets = [
-            prefix + 'ParamsSurface/initial_focal_lengths_xy',
-            prefix + 'ParamsSurface/robust_least_squares',
-            prefix + 'ParamsSurface/downsample',
+            prefix + "ParamsSurface/initial_focal_lengths_xy",
+            prefix + "ParamsSurface/robust_least_squares",
+            prefix + "ParamsSurface/downsample",
         ]
         data = load_hdf5_datasets(datasets, file)
         return cls(**data)

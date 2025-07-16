@@ -11,7 +11,8 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 from pathlib import Path
-import sys, os
+import sys
+import os
 
 # Check if we're running on Read the Docs' servers
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
@@ -43,8 +44,11 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
+    "sphinx.ext.autosummary",
     "sphinxarg.ext",
     "sphinx_rtd_theme",
+    "nbsphinx",
+    "doc.count_docstrings",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -67,4 +71,5 @@ html_theme = 'sphinx_rtd_theme'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path = ['_static']
+html_css_files = ['full_width_theme.css']

@@ -80,27 +80,7 @@ class AttributesManager:
         if parser_class in self.generic_parsers:
             return self.generic_parsers[parser_class]
 
-        # find all parsers that are a subclass of the requested parser_class
-        subclass_parsers: list[aap.AbstractAttributeParser] = []
-        for parser in self.parsers:
-            if isinstance(parser, parser_class):
-                subclass_parsers.append(parser)
-        if len(subclass_parsers) == 1:
-            return subclass_parsers[0]
-        if len(subclass_parsers) == 0:
-            if error_on_not_found:
-                lt.error_and_raise(
-                    RuntimeError,
-                    "Programmer error in AttributesManager.get_parser(): "
-                    + f"there is an unregistered parser class {parser_class}! All AbstractAttributeParsers should "
-                    + "register themselves with RegisterClass() when their file is imported to prevent this error.",
-                )
-            else:
-                return None
-
-        # more than one subclass found, just return the first one
-        lt.debug(f"In AttributesManager.get_parser(): found more than one parser matching parser class {parser_class}")
-        return subclass_parsers[0]
+        return None
 
     def set_parser(self, parser: aap.AbstractAttributeParser):
         """Sets the given parser as the default parser for the given class."""
@@ -166,7 +146,7 @@ class AttributesManager:
         # save the attributes file
         path, name, ext = ft.path_components(attributes_file_path_name_ext)
         ft.create_directories_if_necessary(path)
-        with open(attributes_file_path_name_ext, 'w') as fout:
+        with open(attributes_file_path_name_ext, "w") as fout:
             fout.write(contents)
 
     def load(self, attributes_file_path_name_ext: str):
@@ -188,7 +168,7 @@ class AttributesManager:
             )
             lt.debug(errstr)
             raise FileNotFoundError(errstr)
-        with open(attributes_file_path_name_ext, 'r') as fin:
+        with open(attributes_file_path_name_ext, "r") as fin:
             str_contents = fin.read()
 
         # parse the file contents

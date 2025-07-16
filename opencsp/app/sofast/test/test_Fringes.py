@@ -1,5 +1,4 @@
-"""Unit test suite to test Fringes class
-"""
+"""Unit test suite to test Fringes class"""
 
 from opencsp.app.sofast.lib.Fringes import Fringes
 
@@ -10,7 +9,7 @@ def test_fringe():
 
     # Create frame
     range_ = [25, 250]
-    frame = fringe.get_frames(100, 100, 'uint8', range_)
+    frame = fringe.get_frames(100, 100, "uint8", range_)
 
     # Test number of fringes
     assert 8 == frame.shape[2]

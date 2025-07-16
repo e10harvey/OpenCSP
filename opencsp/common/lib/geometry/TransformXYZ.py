@@ -5,30 +5,57 @@ from opencsp.common.lib.geometry.Vxyz import Vxyz
 
 
 class TransformXYZ:
+    """
+    Representation of a 3D homogeneous spatial transform.
+
+    A TransformXYZ object encapsulates a 4x4 homogeneous transformation matrix,
+    which includes both rotation and translation components. This class provides methods
+    for creating transformations, applying them to vectors, and obtaining their inverse.
+
+    Properties
+    ----------
+    matrix : np.ndarray
+        The 4x4 matrix representation of the transformation.
+    R : Rotation
+        The rotation component of the transformation.
+    R_matrix : np.ndarray
+        The 3x3 rotation matrix.
+    V : Vxyz
+        The translation component of the transformation.
+    V_matrix : np.ndarray
+        The translation vector as a length 3 array.
+    """
+
+    # "ChatGPT 4o-mini" assisted with generating this docstring.
     def __init__(self, matrix: np.ndarray):
         """
-        Representation of a 3D homogeneous spatial transform.
+        Initializes a TransformXYZ object with the given transformation matrix.
 
         Parameters
         ----------
         matrix : np.ndarray
-            4x4 homogeneous 3D transorm matrix.
+            A 4x4 homogeneous transformation matrix.
 
+        Raises
+        ------
+        ValueError
+            If the input matrix does not have shape (4, 4).
         """
+        # "ChatGPT 4o-mini" assisted with generating this docstring.
         # Check 4x4 shape
         if matrix.shape != (4, 4):
-            raise ValueError('Input matrix must have shape 4x4.')
+            raise ValueError("Input matrix must have shape 4x4.")
 
         # Save matrix data
         self._matrix = matrix.astype(float)
 
     def __repr__(self):
-        return '3D Transform:\n' + self._matrix.__repr__()
+        return "3D Transform:\n" + self._matrix.__repr__()
 
     def __mul__(self, T):
         # Check input type
         if not isinstance(T, TransformXYZ):
-            raise TypeError(f'Type, {type(self)}, cannot be multipled by type, {type(T)}.')
+            raise TypeError(f"Type, {type(self)}, cannot be multipled by type, {type(T)}.")
 
         return TransformXYZ(self._matrix @ T._matrix)
 
@@ -36,6 +63,19 @@ class TransformXYZ:
     def from_zero_zero(cls):
         """
         Returns zero translation and zero rotation TransformXYZ.
+
+        Returns
+        -------
+        TransformXYZ.
+
+        """
+        return cls(np.eye(4))
+
+    @classmethod
+    def identity(cls):
+        """
+        Returns the identity tranformation.
+        Alias for TransformXYZ.from_zero_zero().
 
         Returns
         -------
@@ -63,7 +103,7 @@ class TransformXYZ:
         """
         # Check V is length 1
         if len(V) != 1:
-            raise ValueError('Input V must be a length 1 vector.')
+            raise ValueError("Input V must be a length 1 vector.")
         # Create matrix
         matrix = np.eye(4)
         # Add rotation and translation components
@@ -194,7 +234,7 @@ class TransformXYZ:
         V_out += self.V
         return V_out
 
-    def inv(self) -> 'TransformXYZ':
+    def inv(self) -> "TransformXYZ":
         """Returns inverse transformation
 
         Returns
@@ -205,6 +245,6 @@ class TransformXYZ:
         mat_inv = np.linalg.inv(self.matrix)
         return TransformXYZ(mat_inv)
 
-    def copy(self) -> 'TransformXYZ':
+    def copy(self) -> "TransformXYZ":
         """Returns a copy of the transform"""
         return TransformXYZ(self.matrix.copy())

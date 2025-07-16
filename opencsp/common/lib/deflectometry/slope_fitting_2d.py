@@ -26,9 +26,9 @@ def propagate_rays_to_plane(u_ray: Uxyz, v_origin: Vxyz, v_plane: Vxyz, u_plane:
 
     """
     if type(u_ray) is not Uxyz:
-        raise TypeError('u_ray must be type {} not type {}.'.format(Uxyz, type(u_ray)))
+        raise TypeError("u_ray must be type {} not type {}.".format(Uxyz, type(u_ray)))
     if type(u_plane) is not Uxyz:
-        raise TypeError('u_plane must be type {} not type {}.'.format(Uxyz, type(u_plane)))
+        raise TypeError("u_plane must be type {} not type {}.".format(Uxyz, type(u_plane)))
 
     v_origin_plane = v_plane - v_origin
     w_dot = u_plane.dot(v_origin_plane)
@@ -74,10 +74,40 @@ def calc_slopes(v_surf_int_pts_optic: Vxyz, v_optic_cam_optic: Vxyz, v_screen_po
 def fit_slope_robust_ls(
     slope_fit_poly_order: int, slope: np.ndarray, weights: np.ndarray, v_surf_int_pts_optic: Vxyz
 ) -> np.ndarray:
+    """
+    Fits a slope using robust least squares fitting with weighted residuals.
+
+    This function performs a robust least squares fit to the provided slope data,
+    adjusting weights iteratively based on the residuals to minimize the influence
+    of outliers.
+
+    Parameters
+    ----------
+    slope_fit_poly_order : int
+        The order of the polynomial used for fitting the slope.
+    slope : np.ndarray
+        A 1D array of slope measurements.
+    weights : np.ndarray
+        A 1D array of weights corresponding to the slope measurements.
+    v_surf_int_pts_optic : Vxyz
+        An object containing the x and y coordinates of the surface intersection points.
+
+    Returns
+    -------
+    np.ndarray
+        The coefficients of the fitted slope.
+
+    Raises
+    ------
+    ValueError
+        If the lengths of the input arrays do not match or if the fitting process does not converge
+        within the maximum number of iterations.
+    """
+    # "ChatGPT 4o" assisted with generating this docstring.
     # Check lengths match
     if slope.size != weights.size or slope.size != len(v_surf_int_pts_optic):
         raise ValueError(
-            f'Input data lengths must be same size, but sizes were {slope.size:d}, {weights.size:d}, {len(v_surf_int_pts_optic):d}.'
+            f"Input data lengths must be same size, but sizes were {slope.size:d}, {weights.size:d}, {len(v_surf_int_pts_optic):d}."
         )
 
     # Calculate number of points
@@ -122,16 +152,33 @@ def fit_slope_robust_ls(
         weights[np.abs(res_sta) >= 1] = 0
 
     if loop_idx == max_iter:
-        raise ValueError('Robust least squares slope fitting could not converge.')
+        raise ValueError("Robust least squares slope fitting could not converge.")
 
     return coefficients, weights
 
 
 def fit_slope_ls(slope_fit_poly_order: int, slope: np.ndarray, v_surf_int_pts_optic: Vxyz) -> np.ndarray:
     """
-    Returns best fit slope coefficients to measured slope points using least
-    squared fitting.
+    Fits a slope using ordinary least squares fitting.
+
+    This function computes the best fit slope coefficients for the provided slope data
+    using the least squares method.
+
+    Parameters
+    ----------
+    slope_fit_poly_order : int
+        The order of the polynomial used for fitting the slope.
+    slope : np.ndarray
+        A 1D array of slope measurements.
+    v_surf_int_pts_optic : Vxyz
+        An object containing the x and y coordinates of the surface intersection points.
+
+    Returns
+    -------
+    np.ndarray
+        The coefficients of the fitted slope.
     """
+    # "ChatGPT 4o" assisted with generating this docstring.
     # Create terms
     terms = poly_terms(slope_fit_poly_order, v_surf_int_pts_optic.x, v_surf_int_pts_optic.y)
 
@@ -168,7 +215,7 @@ def poly_terms(poly_order: int, x: np.ndarray, y: np.ndarray):
     """
     # Check input sizes are the same
     if x.size != y.size:
-        raise ValueError('X and Y sizes must be equal.')
+        raise ValueError("X and Y sizes must be equal.")
 
     # Build array to contain terms
     n = np.arange(1, poly_order + 2).sum()

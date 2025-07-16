@@ -49,7 +49,6 @@ class test_ImageAttributeParser(unittest.TestCase):
         parser = iap.ImageAttributeParser(notes="")
         self.assertEqual(True, parser.has_contents())
 
-    @pytest.mark.skip("See https://github.com/sandialabs/OpenCSP/issues/3")
     def test_with_attrfile(self):
         """Load all values from the associated attributes file. Use the new current_image_source value."""
         parser = iap.ImageAttributeParser(current_image_source=self.img_file)
@@ -60,18 +59,18 @@ class test_ImageAttributeParser(unittest.TestCase):
         self.assertEqual(self.img_file, parser.current_image_source)
         # The rest of these values should be set by the attributes file, since
         # they are not given in the ImageAttributeParser constructor.
-        self.assertEqual(datetime.datetime.fromisoformat('2024-02-17'), parser.date_collected)
-        self.assertEqual('c', parser.experiment_name)
-        self.assertEqual('d', parser.notes)
+        self.assertEqual(datetime.datetime.fromisoformat("2024-02-17"), parser.date_collected)
+        self.assertEqual("c", parser.experiment_name)
+        self.assertEqual("d", parser.notes)
 
         # Should raise an error when trying to replace the original_image_source.
         with self.assertRaises(ValueError):
-            iap.ImageAttributeParser(current_image_source=self.img_file, original_image_source='z')
+            iap.ImageAttributeParser(current_image_source=self.img_file, original_image_source="z")
 
     def test_partial_attrfile(self):
         """Constructor pulls in non-None values from existing attributes file"""
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -19,6 +19,7 @@ concurrency:
 jobs:
   ubi8-ci:
     name: ubi8-ci
+    if: github.event.repository.fork == false  # This condition checks if the repository is not a fork
     runs-on: [ubuntu-latest]
     permissions:
       packages: read
@@ -35,7 +36,7 @@ jobs:
         with:
           path: OpenCSP
 
-      - name: pytest-cov
+      - name: pytest-cov (OpenCSP/opencsp)
         working-directory: OpenCSP/opencsp
         run: |
           python3 -m pip install -r ../requirements.txt

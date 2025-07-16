@@ -13,6 +13,7 @@ def encode_RG_to_RGB(image: np.ndarray) -> np.ndarray:
     image : np.ndarray
         Input 2d image directly from RG Bayer pattern sensor. Pixels are
         arranged as:
+
             R  G  ...
             G  B  ...
             .  .  ...
@@ -58,7 +59,7 @@ def highlight_saturation(image: np.ndarray, saturation_value: int | float) -> np
     elif np.ndim(image) == 3:
         rgb = image
     else:
-        raise ValueError(f'Input image must have 1 or 3 channels, but image has shape: {image.shape}')
+        raise ValueError(f"Input image must have 1 or 3 channels, but image has shape: {image.shape}")
 
     # Mask saturated pixels
     mask = (rgb >= saturation_value).max(2)

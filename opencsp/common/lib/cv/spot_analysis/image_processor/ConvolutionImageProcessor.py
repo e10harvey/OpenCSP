@@ -9,12 +9,12 @@ import scipy.signal
 from opencsp.common.lib.cv.CacheableImage import CacheableImage
 from opencsp.common.lib.cv.spot_analysis.SpotAnalysisOperable import SpotAnalysisOperable
 from opencsp.common.lib.cv.spot_analysis.image_processor.AbstractSpotAnalysisImageProcessor import (
-    AbstractSpotAnalysisImagesProcessor,
+    AbstractSpotAnalysisImageProcessor,
 )
 import opencsp.common.lib.tool.log_tools as lt
 
 
-class ConvolutionImageProcessor(AbstractSpotAnalysisImagesProcessor):
+class ConvolutionImageProcessor(AbstractSpotAnalysisImageProcessor):
     """
     Convolves an image by the given kernel
 
@@ -75,8 +75,8 @@ class ConvolutionImageProcessor(AbstractSpotAnalysisImagesProcessor):
         image = image.astype(np.float64)
 
         # evaluate the filter
-        mode = 'same'  # shape is max(image, kernel)
-        boundary = 'symm'  # edges are reflected, ie image[-1] = image[0], image[-2] = image[1], etc...
+        mode = "same"  # shape is max(image, kernel)
+        boundary = "symm"  # edges are reflected, ie image[-1] = image[0], image[-2] = image[1], etc...
         kernel = np.ones((self.diameter, self.diameter)) / (self.diameter**2)
         ret = scipy.signal.convolve2d(image, kernel, mode, boundary)
 

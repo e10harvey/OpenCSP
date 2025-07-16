@@ -78,6 +78,16 @@ opencsp.app.sofast.lib.ParamsSofastFixed
    :undoc-members:
    :show-inheritance:
 
+opencsp.app.sofast.lib.SofastInterface
+======================================
+
+.. currentmodule:: opencsp.app.sofast.lib.SofastInterface
+
+.. automodule:: opencsp.app.sofast.lib.SofastInterface
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 opencsp.app.sofast.lib.SystemSofastFringe
 =========================================
 
@@ -98,12 +108,12 @@ opencsp.app.sofast.lib.PatternSofastFixed
    :undoc-members:
    :show-inheritance:
 
-opencsp.app.sofast.lib.visualize_setup
-======================================
+opencsp.app.sofast.lib.SofastConfiguration
+==========================================
 
-.. currentmodule:: opencsp.app.sofast.lib.visualize_setup
+.. currentmodule:: opencsp.app.sofast.lib.SofastConfiguration
 
-.. automodule:: opencsp.app.sofast.lib.visualize_setup
+.. automodule:: opencsp.app.sofast.lib.SofastConfiguration
    :members:
    :undoc-members:
    :show-inheritance:

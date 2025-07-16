@@ -1,5 +1,4 @@
-"""Measurement class for SofastFringe
-"""
+"""Measurement class for SofastFringe"""
 
 from abc import ABC
 import datetime as dt
@@ -19,7 +18,7 @@ class AbstractMeasurementSofast(h5.HDF5_IO_Abstract, ABC):
 
     def __init__(
         self, dist_optic_screen_measure: sod.DistanceOpticScreen, date: dt.datetime, name: str
-    ) -> 'AbstractMeasurementSofast':
+    ) -> "AbstractMeasurementSofast":
         """
         Parameters
         ----------
@@ -43,7 +42,7 @@ class AbstractMeasurementSofast(h5.HDF5_IO_Abstract, ABC):
     def __repr__(self) -> str:
         # "AbstractMeasurementSofast: { name }"
         cls_name = type(self).__name__
-        return cls_name + ': { ' + self.name + ' }'
+        return cls_name + ": { " + self.name + " }"
 
     @property
     def v_measure_point_facet(self):
@@ -56,37 +55,19 @@ class AbstractMeasurementSofast(h5.HDF5_IO_Abstract, ABC):
         return self.dist_optic_screen_measure.dist_optic_screen
 
     @classmethod
-    def _load_from_hdf(cls, file: str, prefix: str) -> dict[str, any]:
-        """
-        Loads from HDF file
-
-        Parameters
-        ----------
-        file : string
-            HDF file to load
-
-        """
+    def _load_from_hdf(cls, file: str, prefix: str = "") -> dict[str, any]:
         # Load grid data
-        datasets = [prefix + '/date', prefix + '/name']
+        datasets = [prefix + "date", prefix + "name"]
         kwargs = h5.load_hdf5_datasets(datasets, file)
 
-        kwargs['dist_optic_screen_measure'] = sod.DistanceOpticScreen.load_from_hdf(file, prefix)
-        kwargs['date'] = dt.datetime.fromisoformat(kwargs['date'])
+        kwargs["dist_optic_screen_measure"] = sod.DistanceOpticScreen.load_from_hdf(file, prefix)
+        kwargs["date"] = dt.datetime.fromisoformat(kwargs["date"])
 
         return kwargs
 
-    def _save_to_hdf(self, file: str, prefix: str) -> None:
-        """
-        Saves to HDF file
-
-        Parameters
-        ----------
-        file : string
-            HDF file to save
-
-        NOTE: Collection date is saved as string in iso-format.
-        """
-        datasets = [prefix + '/date', prefix + '/name']
+    def _save_to_hdf(self, file: str, prefix: str = "") -> None:
+        # NOTE: Collection date is saved as string in iso-format.
+        datasets = [prefix + "date", prefix + "name"]
         data = [self.date.isoformat(), self.name]
 
         # Save data

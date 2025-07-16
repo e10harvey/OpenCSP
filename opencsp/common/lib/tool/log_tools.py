@@ -9,7 +9,9 @@ import os
 import re
 import socket
 import sys
-from typing import Callable
+from typing import Callable, Literal
+
+import numpy as np
 
 # Don't import any other opencsp libraries here. Log tools _must_ be able to be
 # imported before any other opencsp code. Instead, if there are other
@@ -80,8 +82,8 @@ def logger(log_dir_body_ext: str = None, level: int = log.INFO, delete_existing_
 
     # Standard initial lines.
     if not delete_existing_log:
-        info('')  # Blank line to separate from previous log, if any.
-    info('Start run ' + tdt.current_date_time_string())
+        info("")  # Blank line to separate from previous log, if any.
+    info("Start run " + tdt.current_date_time_string())
 
     return global_singleprocessing_logger
 
@@ -120,7 +122,7 @@ def multiprocessing_logger(log_dir_body_ext=None, level=log.INFO) -> log.Logger:
     global_multiprocessing_logger.setLevel(level)
 
     # Get the host and process name
-    process_name = '%(processName)s'
+    process_name = "%(processName)s"
     hn_match = re.match(".*?([0-9]+).*", socket.gethostname())
     if hn_match:
         process_name = hn_match.groups()[0] + ":" + process_name
@@ -140,7 +142,7 @@ def multiprocessing_logger(log_dir_body_ext=None, level=log.INFO) -> log.Logger:
     #     global_multiprocessing_logger.addHandler(handler)
 
     # Standard initial lines.
-    info('Start run ' + tdt.current_date_time_string())
+    info("Start run " + tdt.current_date_time_string())
 
     # Return.
     return global_multiprocessing_logger
@@ -165,6 +167,22 @@ def _add_stream_handlers(logger_: log.Logger, level: int, formatter: log.Formatt
     logger_.addHandler(h2)
 
 
+def _suppress_newlines(logger: log.Logger, **kwargs):
+    suppressed_terminators: dict[log.Handler, str] = {}
+    if "end" in kwargs:
+        for handler in logger.handlers:
+            if isinstance(handler, log.StreamHandler):
+                suppressed_terminators[handler] = handler.terminator
+                handler.terminator = kwargs["end"]
+        del kwargs["end"]
+    return suppressed_terminators, kwargs
+
+
+def _reset_newlines(suppressed_terminator: dict[log.Handler, str]):
+    for handler, terminator in suppressed_terminator.items():
+        handler.terminator = terminator
+
+
 def get_log_method_for_level(level: int) -> Callable:
     """
     Returns one of the log methods (debug, info, warning, error, critical) based on the given level.
@@ -187,6 +205,12 @@ def get_log_method_for_level(level: int) -> Callable:
     error_and_raise(ValueError, f"Error in log_tools.get_log_method_for_level(): unknown log level {level}")
 
 
+def _log(logger: log.Logger, log_method: Callable, *vargs, **kwargs):
+    suppressed_newlines, kwargs = _suppress_newlines(logger, **kwargs)
+    log_method(*vargs, **kwargs)
+    _reset_newlines(suppressed_newlines)
+
+
 def debug(*vargs, **kwargs) -> int:
     """Output debugging information, both to console and log file.
 
@@ -202,10 +226,10 @@ def debug(*vargs, **kwargs) -> int:
         lt.debug('In my_function(), output_file = ' + str(output_file_dir_body_ext))
     """
     if global_multiprocessing_logger is not None:
-        global_multiprocessing_logger.debug(*vargs, **kwargs)
+        _log(global_multiprocessing_logger, global_multiprocessing_logger.debug, *vargs, **kwargs)
     else:
         if global_singleprocessing_logger is not None:
-            global_singleprocessing_logger.debug(*vargs, **kwargs)
+            _log(global_singleprocessing_logger, global_singleprocessing_logger.debug, *vargs, **kwargs)
         else:
             print(*vargs, **kwargs)
     return 0
@@ -223,10 +247,10 @@ def info(*vargs, **kwargs) -> int:
         lt.info('In my_function(), writing file: ' + str(output_file_dir_body_ext) + '...')
     """
     if global_multiprocessing_logger is not None:
-        global_multiprocessing_logger.info(*vargs, **kwargs)
+        _log(global_multiprocessing_logger, global_multiprocessing_logger.info, *vargs, **kwargs)
     else:
         if global_singleprocessing_logger is not None:
-            global_singleprocessing_logger.info(*vargs, **kwargs)
+            _log(global_singleprocessing_logger, global_singleprocessing_logger.info, *vargs, **kwargs)
         else:
             print(*vargs, **kwargs)
     return 0
@@ -246,10 +270,10 @@ def warning(*vargs, **kwargs):
         lt.warn('In my_function(), Plot x label is empty.')
     """
     if global_multiprocessing_logger is not None:
-        global_multiprocessing_logger.warning(*vargs, **kwargs)
+        _log(global_multiprocessing_logger, global_multiprocessing_logger.warning, *vargs, **kwargs)
     else:
         if global_singleprocessing_logger is not None:
-            global_singleprocessing_logger.warning(*vargs, **kwargs)
+            _log(global_singleprocessing_logger, global_singleprocessing_logger.warning, *vargs, **kwargs)
         else:
             print(*vargs, **kwargs)
     return 0
@@ -272,10 +296,10 @@ def error(*vargs, **kwargs) -> int:
         lt.error('In my_function(), non-positive value x=' + str(x) + ' encountered.')
     """
     if global_multiprocessing_logger is not None:
-        global_multiprocessing_logger.error(*vargs, **kwargs)
+        _log(global_multiprocessing_logger, global_multiprocessing_logger.error, *vargs, **kwargs)
     else:
         if global_singleprocessing_logger is not None:
-            global_singleprocessing_logger.error(*vargs, **kwargs)
+            _log(global_singleprocessing_logger, global_singleprocessing_logger.error, *vargs, **kwargs)
         else:
             print(*vargs, **kwargs, file=sys.stderr)
     return 0
@@ -296,21 +320,27 @@ def critical(*vargs, **kwargs) -> int:
         lt.critical('In my_function(), Negative x should be impossible, but x=' + str(x) + ' encountered.')
     """
     if global_multiprocessing_logger is not None:
-        global_multiprocessing_logger.critical(*vargs, **kwargs)
+        _log(global_multiprocessing_logger, global_multiprocessing_logger.critical, *vargs, **kwargs)
     else:
         if global_singleprocessing_logger is not None:
-            global_singleprocessing_logger.critical(*vargs, **kwargs)
+            _log(global_singleprocessing_logger, global_singleprocessing_logger.critical, *vargs, **kwargs)
         else:
             print(*vargs, **kwargs, file=sys.stderr)
     return 0
 
 
-def error_and_raise(exception_class: Exception.__class__, msg: str) -> None:
+def error_and_raise(exception_class: Exception.__class__, msg: str, base_exception: Exception = None) -> None:
     """Logs the given message at the "error" level and raises the given exception, also with this message.
 
-    Args:
-        exception_class (Exception.__class__): An exception class. See below for built-in exception types.
-        msg (str): The message to go along with the exception.
+    Parameters
+    ----------
+    exception_class: Exception.__class__
+        An exception class. See below for built-in exception types.
+    msg: str
+        The message to go along with the exception.
+    base_exception: Exception
+        The exception that caused this code to be called, if any. This will be
+        added onto the newly created exception_class' history.
 
     Example::
 
@@ -318,90 +348,34 @@ def error_and_raise(exception_class: Exception.__class__, msg: str) -> None:
         lt.logger(home_dir() + 'current.log')
         lt.error_and_raise(ValueError, 'In my_function(), non-positive value x=' + str(x) + ' encountered.')
 
-    See https://docs.python.org/3/library/exceptions.html for a list of built-in exceptions::
-
-        BaseException
-        ├── BaseExceptionGroup
-        ├── GeneratorExit
-        ├── KeyboardInterrupt
-        ├── SystemExit
-        └── Exception
-            ├── ArithmeticError
-            │    ├── FloatingPointError
-            │    ├── OverflowError
-            │    └── ZeroDivisionError
-            ├── AssertionError
-            ├── AttributeError
-            ├── BufferError
-            ├── EOFError
-            ├── ImportError
-            │    └── ModuleNotFoundError
-            ├── LookupError
-            │    ├── IndexError
-            │    └── KeyError
-            ├── MemoryError
-            ├── NameError
-            │    └── UnboundLocalError
-            ├── OSError
-            │    ├── BlockingIOError
-            │    ├── ChildProcessError
-            │    ├── ConnectionError
-            │    │    ├── BrokenPipeError
-            │    │    ├── ConnectionAbortedError
-            │    │    ├── ConnectionRefusedError
-            │    │    └── ConnectionResetError
-            │    ├── FileExistsError
-            │    ├── FileNotFoundError
-            │    ├── InterruptedError
-            │    ├── IsADirectoryError
-            │    ├── NotADirectoryError
-            │    ├── PermissionError
-            │    ├── ProcessLookupError
-            │    └── TimeoutError
-            ├── ReferenceError
-            ├── RuntimeError
-            │    ├── NotImplementedError
-            │    └── RecursionError
-            ├── StopAsyncIteration
-            ├── StopIteration
-            ├── SyntaxError
-            │    └── IndentationError
-            │         └── TabError
-            ├── SystemError
-            ├── TypeError
-            ├── ValueError
-            │    └── UnicodeError
-            │         ├── UnicodeDecodeError
-            │         ├── UnicodeEncodeError
-            │         └── UnicodeTranslateError
-            └── Warning
-                ├── BytesWarning
-                ├── DeprecationWarning
-                ├── EncodingWarning
-                ├── FutureWarning
-                ├── ImportWarning
-                ├── PendingDeprecationWarning
-                ├── ResourceWarning
-                ├── RuntimeWarning
-                ├── SyntaxWarning
-                ├── UnicodeWarning
-                └── UserWarning
+    See https://docs.python.org/3/library/exceptions.html for a list of built-in exceptions.
     """
     msg = str(msg)  # Ensure that message is a string, to enable concatenation.
     error(msg)
+
     try:
         e = exception_class(msg)
     except Exception as exc:
         raise RuntimeError(msg) from exc
-    raise e
+
+    if base_exception is not None:
+        raise e from base_exception
+    else:
+        raise e
 
 
-def critical_and_raise(exception_class: Exception.__class__, msg: str) -> None:
+def critical_and_raise(exception_class: Exception.__class__, msg: str, base_exception: Exception = None) -> None:
     """Logs the given message at the "critical" level and raises the given exception, also with this message.
 
-    Args:
-        exception_class (Exception.__class__): An exception class. See error_and_raise() for a description of built-in exceptions.
-        msg (str): The message to go along with the exception.
+    Parameters
+    ----------
+    exception_class: Exception.__class__
+        An exception class. See error_and_raise() for a description of built-in exceptions.
+    msg: str
+        The message to go along with the exception.
+    base_exception: Exception
+        The exception that caused this code to be called, if any. This will be
+        added onto the newly created exception_class' history.
 
     Example::
 
@@ -411,11 +385,16 @@ def critical_and_raise(exception_class: Exception.__class__, msg: str) -> None:
     """
     msg = str(msg)  # Ensure that message is a string, to enable concatenation.
     critical(msg)
+
     try:
         e = exception_class(msg)
     except Exception as exc:
         raise RuntimeError(msg) from exc
-    raise e
+
+    if base_exception is not None:
+        raise e from base_exception
+    else:
+        raise e
 
 
 def log_and_raise_value_error(local_logger, msg) -> None:
@@ -430,3 +409,52 @@ def log_and_raise_value_error(local_logger, msg) -> None:
     """
     error(msg)
     raise ValueError(msg)
+
+
+def log_progress(
+    percentage: int | float, carriage_return: bool | Literal['auto'] = 'auto', prev_percentage: int = None
+):
+    """Prints the current progress as a progress bar and number.
+
+    Parameters
+    ----------
+    percentage : int or float
+        The current progress. If an integer, then the range is clipped to 0-100.
+        If a float, then the range is clipped to 0-1, unless >1 then it is cast
+        to an integer.
+
+    carriage_return : bool or 'auto', optional
+        If True, then a carriage return is printed instead of a newline, which will cause the next line printed to overwrite this line. This can be used to "draw" the progress interactively in the terminal. If 'auto', then this will be True when percentage != 100. By default 'auto'.
+
+    prev_percentage: int, optional
+        If not None, then this is compared to the given percentage. If they are the same then nothing is printed.
+
+    Returns
+    -------
+    percentage : int
+        The value printed, in the range 0-100. Can be passed into the next call as prev_percentage.
+
+    """
+    if isinstance(percentage, int):
+        percentage = int(np.clip(percentage, 0, 100))
+        if prev_percentage is not None:
+            if prev_percentage == percentage:
+                # don't print again
+                return percentage
+
+        if carriage_return == 'auto':
+            carriage_return = percentage != 100
+
+        sval = "|" + ("=" * percentage) + (" " * (100 - percentage)) + f"| {percentage}%"
+        if carriage_return:
+            info(sval, end='\r')
+        else:
+            info(sval)
+
+        return percentage
+
+    else:  # isinstance(percentage, float)
+        if percentage > 1.0:
+            return log_progress(int(np.round(percentage)), carriage_return, prev_percentage)
+        else:
+            return log_progress(int(np.round(percentage * 100)), carriage_return, prev_percentage)

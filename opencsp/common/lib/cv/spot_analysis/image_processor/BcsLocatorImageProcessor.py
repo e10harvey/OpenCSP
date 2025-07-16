@@ -9,7 +9,7 @@ from opencsp.common.lib.cv.CacheableImage import CacheableImage
 from opencsp.common.lib.cv.fiducials.BcsFiducial import BcsFiducial
 from opencsp.common.lib.cv.spot_analysis.SpotAnalysisOperable import SpotAnalysisOperable
 from opencsp.common.lib.cv.spot_analysis.image_processor.AbstractSpotAnalysisImageProcessor import (
-    AbstractSpotAnalysisImagesProcessor,
+    AbstractSpotAnalysisImageProcessor,
 )
 from opencsp.common.lib.cv.spot_analysis.image_processor.AnnotationImageProcessor import AnnotationImageProcessor
 from opencsp.common.lib.cv.spot_analysis.image_processor.ConvolutionImageProcessor import ConvolutionImageProcessor
@@ -21,7 +21,7 @@ import opencsp.common.lib.tool.file_tools as ft
 import opencsp.common.lib.tool.log_tools as lt
 
 
-class BcsLocatorImageProcessor(AbstractSpotAnalysisImagesProcessor):
+class BcsLocatorImageProcessor(AbstractSpotAnalysisImageProcessor):
     """
     Locates the BCS by identifying a circle in the image.
 
@@ -48,7 +48,7 @@ class BcsLocatorImageProcessor(AbstractSpotAnalysisImagesProcessor):
             lt.error_and_raise(
                 RuntimeError,
                 "Error in BcsLocatorImageProcessor._execute(): image must be grayscale (2 dimensions), but "
-                + f"the shape of the image is {image.shape} for '{operable.primary_image_source_path}'",
+                + f"the shape of the image is {image.shape} for '{operable.best_primary_pathnameext}'",
             )
 
         # find all possible matches
@@ -71,7 +71,7 @@ class BcsLocatorImageProcessor(AbstractSpotAnalysisImagesProcessor):
             circle_arr = circles[0][0]
             center = p2.Pxy([circle_arr[0], circle_arr[1]])
             radius = circle_arr[2]
-            circle = BcsFiducial(center, radius, style=rcb.thin(color='m'))
+            circle = BcsFiducial(center, radius, style=rcb.thin(color="m"))
 
         # assign to the operable
         new_found_fiducials = copy.copy(operable.found_fiducials)
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     style = rcps.RenderControlPointSeq(markersize=10)
     operable = SpotAnalysisOperable(CacheableImage(source_path=image_file))
 
-    processor0 = ConvolutionImageProcessor(kernel='gaussian', diameter=3)
+    processor0 = ConvolutionImageProcessor(kernel="gaussian", diameter=3)
     processor1 = BcsLocatorImageProcessor()
     processor2 = AnnotationImageProcessor()
 

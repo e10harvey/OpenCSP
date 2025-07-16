@@ -1,15 +1,21 @@
-import opencsp.common.lib.render.color as color
+import matplotlib.colors
+
+import opencsp.common.lib.render.Color as cl
 import opencsp.common.lib.tool.log_tools as lt
 
 
 class RenderControlSurface:
+    """
+    Render control information for how to style surface plots (see View3d
+    function plot_surface and plot_trisurface)."""
+
     def __init__(
         self,
         draw_title=True,
-        color: str | None = "silver",
-        color_map: str | None = None,
+        color: str | cl.Color | None = "silver",
+        color_map: str | matplotlib.colors.Colormap | None = None,
         alpha: float = 0.25,
-        edgecolor='black',
+        edgecolor="black",
         linewidth=0.05,
         contour: None | bool | str = True,
         contour_color_map: str | None = None,
@@ -22,10 +28,10 @@ class RenderControlSurface:
         ----------
         draw_title : bool, optional
             If True then the title will be drawn on graph, default is True
-        color : str | None, optional
+        color : str | Color | None, optional
             The color of the plot if not using a color map. For example
             color.plot_colors.blue. By default "silver".
-        color_map : str | None, optional
+        color_map : str | Colormap None, optional
             The color map of the plot to help discern different plot values. See
             https://matplotlib.org/stable/gallery/color/colormap_reference.html
             for common options. By default None.
@@ -50,24 +56,26 @@ class RenderControlSurface:
         self.draw_title = draw_title
         self.alpha = alpha
         self.antialiased = False if self.alpha > 0.99 else None
-        self.color = color
+        self._color = color
         self.color_map = color_map
         self.edgecolor = edgecolor
         self.linewidth = linewidth
         self.contour = False
         self.contour_color_map = contour_color_map
         self.contour_alpha = 0.7
-        self.contours = {'x': False, 'y': False, 'z': False}
+        self.contours = {"x": False, "y": False, "z": False}
+
+        self._standardize_color_values()
 
         # determine the type of contour to be drawn
         if contour is None or contour == False:
             self.contour = False
         elif contour == True:
-            self.contours['x'] = True
+            self.contours["x"] = True
         elif isinstance(contour, str):
             self.contour = True
             for axis in contour:
-                axis = axis.replace('p', 'x').replace('q', 'y').replace('r', 'z')
+                axis = axis.replace("p", "x").replace("q", "y").replace("r", "z")
                 if axis not in self.contours:
                     lt.error_and_raise(
                         ValueError,
@@ -84,3 +92,12 @@ class RenderControlSurface:
                 elif self.color is not None:
                     # TODO create a custom color map based on the color
                     pass
+
+    @property
+    def color(self) -> tuple[float, float, float, float] | None:
+        if self._color is not None:
+            return self._color.rgba()
+
+    def _standardize_color_values(self):
+        # convert to 'Color' class
+        self._color = cl.Color.convert(self._color)

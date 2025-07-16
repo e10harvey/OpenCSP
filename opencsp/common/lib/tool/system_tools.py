@@ -2,6 +2,8 @@ import os
 import re
 import socket
 
+from opencsp import opencsp_settings
+
 
 def is_solo():
     """Determines if this computer is one of the Solo HPC nodes.
@@ -22,9 +24,7 @@ def is_cluster():
     Returns:
         bool: True if running on a HPC cluster node
     """
-    from opencsp.common.lib.opencsp_path import opencsp_settings
-
-    return opencsp_settings['system']['is_cluster'] == True
+    return opencsp_settings["system"].getboolean("is_cluster")
 
 
 __is_production_run = is_cluster() or not __debug__
@@ -40,6 +40,7 @@ def is_production_run():
 
 
 def set_is_production_run(is_production_run: bool):
+    "Setter for __is_production_run global"
     __is_production_run = is_production_run
 
 
@@ -63,5 +64,5 @@ def mem_status():
 
         return total / 10e8, used / 10e8, (avail) / 10e8
     else:
-        total_memory, used_memory, free_memory = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
+        total_memory, used_memory, free_memory = map(int, os.popen("free -t -m").readlines()[-1].split()[1:])
         return total_memory / 1000, used_memory / 1000, free_memory / 1000

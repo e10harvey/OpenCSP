@@ -1,10 +1,10 @@
-from typing import Callable, Iterable
-from matplotlib import colors
-import sympy
+from typing import Iterable
+
+import numpy as np
+
 from opencsp.common.lib.geometry.FunctionXYAbstract import FunctionXYAbstract
 from opencsp.common.lib.render.View3d import View3d
 import opencsp.common.lib.render_control.RenderControlFunctionXY as rcfxy
-import numpy as np
 
 
 class FunctionXYGrid(FunctionXYAbstract):
@@ -43,13 +43,6 @@ class FunctionXYGrid(FunctionXYAbstract):
         self.x0, self.x1, self.y0, self.y1 = limits
         self.x_step = (self.x1 - self.x0) / (self.x_count - 1)
         self.y_step = (self.y1 - self.y0) / (self.y_count - 1)
-
-    # def __add__(self, f2:'FunctionXYDiscrete') -> "FunctionXYDiscrete":
-    #     sum = self.values + f2.values
-    #     return FunctionXYDiscrete(sum)
-
-    # def interpolate() -> FunctionXYAnalytic:
-    #     ...
 
     # override
     def value_at(self, x: float | Iterable[float], y: float | Iterable[float]) -> float | np.ndarray[float]:
@@ -129,9 +122,9 @@ class FunctionXYGrid(FunctionXYAbstract):
                 np.flipud(self.values),
                 colorbar=functionXY_style.colorbar,
                 vmin=vmin,
-                levels=3,  # TODO tjlarki: add to render control
+                levels=3,  # TODO TJL:add to render control
                 vmax=vmax,
-                colors="black",  # TODO tjlarki: add to render control
+                colors="black",  # TODO TJL:add to render control
                 #  cmap=functionXY_style.cmap,
                 extent=extent,
             )

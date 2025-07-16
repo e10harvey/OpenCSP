@@ -1,13 +1,13 @@
 from opencsp.common.lib.cv.spot_analysis.SpotAnalysisOperable import SpotAnalysisOperable
 from opencsp.common.lib.cv.spot_analysis.image_processor.AbstractSpotAnalysisImageProcessor import (
-    AbstractSpotAnalysisImagesProcessor,
+    AbstractSpotAnalysisImageProcessor,
 )
 import opencsp.common.lib.tool.log_tools as lt
 
 
-class EchoImageProcessor(AbstractSpotAnalysisImagesProcessor):
+class EchoImageProcessor(AbstractSpotAnalysisImageProcessor):
     """
-    Prints the image names to the console as they are encountered.
+    A do-nothing processor that prints the image names to the console as they are encountered.
     """
 
     def __init__(self, log_level=lt.log.INFO, prefix=""):
@@ -19,6 +19,6 @@ class EchoImageProcessor(AbstractSpotAnalysisImagesProcessor):
         self.logger = lt.get_log_method_for_level(self.log_level)
 
     def _execute(self, operable: SpotAnalysisOperable, is_last: bool) -> list[SpotAnalysisOperable]:
-        self.logger(f"{self.prefix}Processing image {operable.primary_image_name_for_logs}")
+        self.logger(f"{self.prefix}Processing image {operable.best_primary_nameext}")
 
         return [operable]

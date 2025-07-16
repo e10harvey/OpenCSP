@@ -12,6 +12,7 @@ import opencsp.app.sofast.lib.calculation_data_classes as cdc
 from opencsp.app.sofast.lib.DefinitionEnsemble import DefinitionEnsemble
 from opencsp.app.sofast.lib.DefinitionFacet import DefinitionFacet
 from opencsp.app.sofast.lib.ParamsOpticGeometry import ParamsOpticGeometry
+from opencsp.app.sofast.lib.ParamsMaskCalculation import ParamsMaskCalculation
 from opencsp.app.sofast.lib.DebugOpticsGeometry import DebugOpticsGeometry
 import opencsp.app.sofast.lib.image_processing as ip
 from opencsp.app.sofast.lib.SpatialOrientation import SpatialOrientation
@@ -76,9 +77,9 @@ def process_singlefacet_geometry(
         Geometric/positional errors and reprojection errors associated with solving for facet location.
     """
     if debug.debug_active:
-        lt.debug('process_optics_geometry debug on.')
+        lt.debug("process_optics_geometry debug on.")
     else:
-        lt.debug('process_optics_geometry debug off.')
+        lt.debug("process_optics_geometry debug off.")
 
     # Create data classes
     data_geometry_general = cdc.CalculationDataGeometryGeneral()
@@ -101,8 +102,8 @@ def process_singlefacet_geometry(
     if debug.debug_active:
         fig = plt.figure()
         debug.figures.append(fig)
-        plt.imshow(mask_raw, cmap='gray')
-        plt.title('Raw Mask')
+        plt.imshow(mask_raw, cmap="gray")
+        plt.title("Raw Mask")
 
     # Find edges of mask
     v_edges_image = ip.edges_from_mask(mask_raw)
@@ -117,8 +118,8 @@ def process_singlefacet_geometry(
         fig = plt.figure()
         debug.figures.append(fig)
         plt.imshow(mask_raw)
-        plt.scatter(*v_mask_centroid_image.data, marker='x')
-        plt.title('Mask Centroid')
+        plt.scatter(*v_mask_centroid_image.data, marker="x")
+        plt.title("Mask Centroid")
 
     # Find expected position of optic centroid
     v_cam_optic_centroid_cam_exp = sp.t_from_distance(
@@ -132,9 +133,9 @@ def process_singlefacet_geometry(
         debug.figures.append(fig)
         plt.imshow(mask_raw)
         plt.scatter(
-            *camera.project(v_cam_optic_centroid_cam_exp, Rotation.identity(), Vxyz((0, 0, 0))).data, marker='.'
+            *camera.project(v_cam_optic_centroid_cam_exp, Rotation.identity(), Vxyz((0, 0, 0))).data, marker="."
         )
-        plt.title('Expected Optic Centroid')
+        plt.title("Expected Optic Centroid")
 
     # Find expected orientation of optic
     r_cam_optic_exp = sp.r_from_position(v_cam_optic_centroid_cam_exp, ori.v_cam_screen_cam)
@@ -155,12 +156,16 @@ def process_singlefacet_geometry(
         debug.figures.append(fig)
         plt.imshow(mask_raw)
         _plot_labeled_points(v_optic_corners_image_exp)
-        plt.title('Expected Optic Corners')
+        plt.title("Expected Optic Corners")
 
     # Refine locations of optic corners with mask
-    prs = [params.perimeter_refine_axial_search_dist, params.perimeter_refine_perpendicular_search_dist]
-    loop_facet_image_refine = ip.refine_mask_perimeter(loop_optic_image_exp, v_edges_image, *prs)
-    data_image_processing_facet.loop_facet_image_refine = loop_facet_image_refine
+    try:
+        prs = [params.perimeter_refine_axial_search_dist, params.perimeter_refine_perpendicular_search_dist]
+        loop_facet_image_refine = ip.refine_mask_perimeter(loop_optic_image_exp, v_edges_image, *prs)
+        data_image_processing_facet.loop_facet_image_refine = loop_facet_image_refine
+    except ValueError as er:
+        lt.critical(repr(er))
+        lt.error_and_raise(ValueError, "SOFAST failed to find the corners of the optic.")
 
     # Plot refined optic corners
     if debug.debug_active:
@@ -168,7 +173,7 @@ def process_singlefacet_geometry(
         debug.figures.append(fig)
         plt.imshow(mask_raw)
         _plot_labeled_points(loop_facet_image_refine.vertices)
-        plt.title('Refined Optic Corners')
+        plt.title("Refined Optic Corners")
 
     # Create fitted mask
     vx = np.arange(mask_raw.shape[1])
@@ -195,7 +200,7 @@ def process_singlefacet_geometry(
         plt.imshow(mask_raw)
         pts_reproj = camera.project(facet_data.v_facet_corners, r_cam_optic_refine_1.inv(), v_cam_optic_cam_refine_1)
         _plot_labeled_points(pts_reproj)
-        plt.title('Reprojected Points 1')
+        plt.title("Reprojected Points 1")
 
     # Calculate refined measure point vector in optic coordinates
     v_measure_point_optic_cam_refine_1 = v_measure_point_facet.rotate(r_optic_cam_refine_1)
@@ -213,7 +218,7 @@ def process_singlefacet_geometry(
         plt.imshow(mask_raw)
         pts_reproj = camera.project(facet_data.v_facet_corners, r_cam_optic_refine_1.inv(), v_cam_optic_cam_refine_2)
         _plot_labeled_points(pts_reproj)
-        plt.title('Reprojected Points 2')
+        plt.title("Reprojected Points 2")
 
     # Orient optic
     ori.orient_optic_cam(r_cam_optic_refine_1, v_cam_optic_cam_refine_2)
@@ -303,7 +308,7 @@ def process_undefined_geometry(
         Geometric/positional errors and reprojection errors associated with solving for facet location.
     """
     if debug.debug_active:
-        lt.debug('process_optics_geometry debug on, but is not yet supported for undefined mirrors.')
+        lt.debug("process_optics_geometry debug on, but is not yet supported for undefined mirrors.")
 
     # Define data classes
     data_geometry_general = cdc.CalculationDataGeometryGeneral()
@@ -359,14 +364,15 @@ def process_undefined_geometry(
 
 
 def process_multifacet_geometry(
-    facet_data: DefinitionFacet,
+    facet_data: list[DefinitionFacet],
     ensemble_data: DefinitionEnsemble,
     mask_raw: ndarray,
     v_meas_pt_ensemble: Vxyz,
     orientation: SpatialOrientation,
     camera: Camera,
     dist_optic_screen: float,
-    params: ParamsOpticGeometry = ParamsOpticGeometry(),
+    params_geometry: ParamsOpticGeometry = ParamsOpticGeometry(),
+    params_mask: ParamsMaskCalculation = ParamsMaskCalculation(),
     debug: DebugOpticsGeometry = DebugOpticsGeometry(),
 ) -> tuple[
     cdc.CalculationDataGeometryGeneral,
@@ -393,8 +399,10 @@ def process_multifacet_geometry(
         Camera object
     dist_optic_screen : float
         Optic to screen distance, meters
-    params : ParamsOpticGeometry, optional
+    params_geometry : ParamsOpticGeometry, optional
         ParamsOpticGeometry object, by default ParamsOpticGeometry()
+    params_mask : ParamsMaskCalculation, optional
+        ParamsMaskCalculation object, by default ParamsMaskCalculation()
     debug : DebugOpticsGeometry, optional
         DebugOpticsGeometry object, by default DebugOpticsGeometry()
 
@@ -414,7 +422,7 @@ def process_multifacet_geometry(
         Geometric/positional errors and reprojection errors associated with solving for facet location.
     """
     if debug.debug_active:
-        lt.debug('process_optics_geometry debug on.')
+        lt.debug("process_optics_geometry debug on.")
 
     # Get facet data
     v_facet_corners_facet: list = [
@@ -451,7 +459,8 @@ def process_multifacet_geometry(
 
     # Calculate ensemble corners in ensemble coordinates
     v_ensemble_corns_ensemble = []
-    for r_facet_ensemble_cur, (idx_facet, idx_corn) in zip(r_facet_ensemble, ensemble_corns_indices):
+    for idx_facet, idx_corn in ensemble_corns_indices:
+        r_facet_ensemble_cur = r_facet_ensemble[idx_facet]
         v_ensemble_corns_ensemble.append(
             (
                 v_facet_locs_ensemble[idx_facet]
@@ -470,8 +479,8 @@ def process_multifacet_geometry(
     if debug.debug_active:
         fig = plt.figure()
         debug.figures.append(fig)
-        plt.imshow(mask_raw, cmap='gray')
-        plt.title('Raw Mask')
+        plt.imshow(mask_raw, cmap="gray")
+        plt.title("Raw Mask")
 
     # Find edges of mask
     v_edges_image = ip.edges_from_mask(mask_raw)
@@ -508,12 +517,19 @@ def process_multifacet_geometry(
         debug.figures.append(fig)
         plt.imshow(mask_raw)
         _plot_labeled_points(v_ensemble_corners_exp_image)
-        plt.title('Expected Perimeter Points')
+        plt.title("Expected Perimeter Points")
 
     # Refine perimeter points
-    args = [params.perimeter_refine_axial_search_dist, params.perimeter_refine_perpendicular_search_dist]
-    loop_ensemble_image_refine = ip.refine_mask_perimeter(loop_ensemble_exp, v_edges_image, *args)
-    data_image_processing_general.loop_optic_image_refine = loop_ensemble_image_refine
+    try:
+        args = [
+            params_geometry.perimeter_refine_axial_search_dist,
+            params_geometry.perimeter_refine_perpendicular_search_dist,
+        ]
+        loop_ensemble_image_refine = ip.refine_mask_perimeter(loop_ensemble_exp, v_edges_image, *args)
+        data_image_processing_general.loop_optic_image_refine = loop_ensemble_image_refine
+    except ValueError as er:
+        lt.critical(repr(er))
+        lt.error_and_raise(ValueError, "SOFAST failed to find the corners of the optic.")
 
     # Plot refined perimeter points
     if debug.debug_active:
@@ -521,7 +537,7 @@ def process_multifacet_geometry(
         debug.figures.append(fig)
         plt.imshow(mask_raw)
         _plot_labeled_points(loop_ensemble_image_refine.vertices)
-        plt.title('Refined Perimeter Points')
+        plt.title("Refined Perimeter Points")
 
     # Refine ensemble position/orientation with perimeter points
     r_ensemble_cam_refine_1, v_cam_ensemble_cam_refine_1 = sp.calc_rt_from_img_pts(
@@ -544,15 +560,21 @@ def process_multifacet_geometry(
 
     # Refine facet corners
     args = [
-        params.facet_corns_refine_step_length,
-        params.facet_corns_refine_perpendicular_search_dist,
-        params.facet_corns_refine_frac_keep,
+        params_geometry.facet_corns_refine_step_length,
+        params_geometry.facet_corns_refine_perpendicular_search_dist,
+        params_geometry.facet_corns_refine_frac_keep,
     ]
     loops_facets_refined: list[LoopXY] = []
     for idx in range(num_facets):
-        loop = ip.refine_facet_corners(v_facet_corners_image_exp[idx], v_uv_facet_cent_exp[idx], v_edges_image, *args)
-        loops_facets_refined.append(loop)
-        data_image_processing_facet[idx].loop_facet_image_refine = loop
+        try:
+            loop = ip.refine_facet_corners(
+                v_facet_corners_image_exp[idx], v_uv_facet_cent_exp[idx], v_edges_image, *args
+            )
+            loops_facets_refined.append(loop)
+            data_image_processing_facet[idx].loop_facet_image_refine = loop
+        except ValueError as er:
+            lt.critical(repr(er))
+            lt.error_and_raise(ValueError, "SOFAST failed to find the corners of the optic.")
 
         # Plot refined perimeter points
         if debug.debug_active:
@@ -560,7 +582,7 @@ def process_multifacet_geometry(
                 fig = plt.figure()
                 debug.figures.append(fig)
                 plt.imshow(mask_raw)
-                plt.title('Refined Facet Corners')
+                plt.title("Refined Facet Corners")
             loop.draw()
 
     # Concatenate all refined facet corners
@@ -582,7 +604,11 @@ def process_multifacet_geometry(
     mask_processed *= mask_raw[..., np.newaxis]
     mask_processed = np.logical_and(mask_processed, mask_fitted)
     for idx in range(num_facets):
-        data_image_processing_facet[idx].mask_processed = mask_processed[..., idx]
+        mask = mask_processed[..., idx]
+        # If enabled, keep largest mask area (fill holes) for each individual facet
+        if params_mask.keep_largest_area:
+            mask = ip.keep_largest_mask_area(mask)
+        data_image_processing_facet[idx].mask_processed = mask
 
     # Refine R/T with all refined facet corners
     r_ensemble_cam_refine_2, v_cam_ensemble_cam_refine_2 = sp.calc_rt_from_img_pts(
@@ -681,4 +707,4 @@ def _plot_labeled_points(pts: Vxy) -> None:
     """Plots labeled points on axis for debugging"""
     plt.scatter(*pts.data)
     for idx, pt in enumerate(pts):
-        plt.text(*pt.data, idx, color='k')
+        plt.text(*pt.data, idx, color="k")

@@ -2,16 +2,16 @@ import numpy as np
 
 from opencsp.common.lib.cv.spot_analysis.SpotAnalysisOperable import SpotAnalysisOperable
 from opencsp.common.lib.cv.spot_analysis.image_processor.AbstractSpotAnalysisImageProcessor import (
-    AbstractSpotAnalysisImagesProcessor,
+    AbstractSpotAnalysisImageProcessor,
 )
 import opencsp.common.lib.opencsp_path.opencsp_root_path as orp
 import opencsp.common.lib.tool.file_tools as ft
 import opencsp.common.lib.tool.log_tools as lt
 
 
-class ExposureDetectionImageProcessor(AbstractSpotAnalysisImagesProcessor):
+class ExposureDetectionImageProcessor(AbstractSpotAnalysisImageProcessor):
     """
-    Detects over and under exposure in images and adds the relavent tag to the image.
+    A do-nothing processor that detects over and under exposure in images and adds the relavent tag to the image.
 
     Over or under exposure is determined by the proportion of pixels that are at near the max_pixel_value threshold.
     If more pixels than the over exposure limit is at the maximum level, then the image is considered over exposed. If
@@ -70,9 +70,9 @@ class ExposureDetectionImageProcessor(AbstractSpotAnalysisImagesProcessor):
     def _execute(self, operable: SpotAnalysisOperable, is_last: bool) -> list[SpotAnalysisOperable]:
         image = operable.primary_image.nparray
         notes = (
-            'ExposureDetectionImageProcessor',
+            "ExposureDetectionImageProcessor",
             [
-                f'settings: {self.under_exposure_limit=}, {self.under_exposure_threshold=}, {self.over_exposure_limit=}, {self.max_pixel_value=}'
+                f"settings: {self.under_exposure_limit=}, {self.under_exposure_threshold=}, {self.over_exposure_limit=}, {self.max_pixel_value=}"
             ],
         )
 
@@ -131,17 +131,17 @@ if __name__ == "__main__":
     ft.create_directories_if_necessary(outdir)
     ft.delete_files_in_directory(outdir, "*")
     images_filenames = ft.files_in_directory_by_extension(indir, ["jpg"])["jpg"]
-    images_path_name_ext = [indir + '/' + filename for filename in images_filenames]
+    images_path_name_ext = [indir + "/" + filename for filename in images_filenames]
 
     import opencsp.common.lib.cv.SpotAnalysis as sa
-    from opencsp.common.lib.cv.spot_analysis.image_processor import *
+    from opencsp.common.lib.cv.spot_analysis.image_processor import CroppingImageProcessor
 
     image_processors = [
         CroppingImageProcessor(x1, x2, y1, y2),
         ExposureDetectionImageProcessor(under_exposure_threshold=120),
     ]
 
-    spot_analysis = sa.SpotAnalysis('ExposureDetectionImageProcessor test', image_processors, outdir)
+    spot_analysis = sa.SpotAnalysis("ExposureDetectionImageProcessor test", image_processors, outdir)
     spot_analysis.set_primary_images(images_path_name_ext)
 
     for operable in spot_analysis:

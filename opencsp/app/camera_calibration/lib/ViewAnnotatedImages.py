@@ -9,7 +9,8 @@ from PIL import Image, ImageTk
 
 
 class ViewAnnotatedImages:
-    """Class that controls a window used to view images with a next and previous
+    """
+    Class that controls a window used to view images with a next and previous
     button
     """
 
@@ -32,7 +33,7 @@ class ViewAnnotatedImages:
         self.idx_im = 0
 
         # Set title
-        self.root.title('View Annotated Images')
+        self.root.title("View Annotated Images")
 
         # Get screen height/width
         screen_width = root.winfo_screenwidth()
@@ -43,7 +44,7 @@ class ViewAnnotatedImages:
         self.height = screen_height - 160
 
         # Set size of GUI
-        self.root.geometry(f'{screen_width - 60:d}x{screen_height - 80:d}+20+0')
+        self.root.geometry(f"{screen_width - 60:d}x{screen_height - 80:d}+20+0")
 
         # Set escape to exit window
         self.root.bind("<Escape>", lambda e: self.close())
@@ -52,23 +53,23 @@ class ViewAnnotatedImages:
 
         # Create image title
         self.var_title = tkinter.StringVar(value=image_names[self.idx_im])
-        title = tkinter.Label(root, textvariable=self.var_title, font=('calibre', 15, 'bold'))
+        title = tkinter.Label(root, textvariable=self.var_title, font=("calibre", 15, "bold"))
 
         # Create drawing canvas
         self.canvas = tkinter.Canvas(root, width=self.width, height=self.height)
-        self.canvas.configure(background='white')
+        self.canvas.configure(background="white")
 
-        self.canvas_image = self.canvas.create_image(0, 0, anchor='nw')
+        self.canvas_image = self.canvas.create_image(0, 0, anchor="nw")
 
         # Create buttons
-        btn_1 = tkinter.Button(root, text='Previous', width=20, command=self.show_prev)
-        btn_2 = tkinter.Button(root, text='Next', width=20, command=self.show_next)
+        btn_1 = tkinter.Button(root, text="Previous", width=20, command=self.show_prev)
+        btn_2 = tkinter.Button(root, text="Next", width=20, command=self.show_next)
 
         # Place widgets
-        title.grid(row=0, column=0, columnspan=2, sticky='ew')
+        title.grid(row=0, column=0, columnspan=2, sticky="ew")
         self.canvas.grid(row=1, column=0, columnspan=2)
-        btn_1.grid(row=2, column=0, sticky='e')
-        btn_2.grid(row=2, column=1, sticky='w')
+        btn_1.grid(row=2, column=0, sticky="e")
+        btn_2.grid(row=2, column=1, sticky="w")
 
         # Show first image
         self.update_image()
@@ -77,6 +78,9 @@ class ViewAnnotatedImages:
         self.root.mainloop()
 
     def update_image(self):
+        """
+        Updates displayed image and image label
+        """
         # Update image title
         self.var_title.set(self.image_names[self.idx_im])
 
@@ -93,7 +97,7 @@ class ViewAnnotatedImages:
             width = int(self.height * asp_cur)
             height = self.height
 
-        image = Image.fromarray(image_array, 'RGB').resize(size=(width, height))
+        image = Image.fromarray(image_array, "RGB").resize(size=(width, height))
         image_tk = ImageTk.PhotoImage(image)
 
         # Display TK image
@@ -101,6 +105,9 @@ class ViewAnnotatedImages:
         self.canvas.itemconfig(self.canvas_image, image=image_tk)
 
     def show_next(self):
+        """
+        Show the next image.
+        """
         # Update index
         self.idx_im += 1
         if self.idx_im >= len(self.images):
@@ -110,6 +117,9 @@ class ViewAnnotatedImages:
         self.update_image()
 
     def show_prev(self):
+        """
+        Show the previous image.
+        """
         # Update index
         self.idx_im -= 1
         if self.idx_im < 0:

@@ -1,5 +1,4 @@
-"""Fixed pattern dot location calibration.
-"""
+"""Fixed pattern dot location calibration."""
 
 import os
 
@@ -61,7 +60,8 @@ class CalibrateSofastFixedDots:
         x_max: int,
         y_min: int,
         y_max: int,
-    ) -> 'CalibrateSofastFixedDots':
+        xy_pts_known: tuple[tuple[int, int]] = None,
+    ) -> "CalibrateSofastFixedDots":
         """Instantiates the calibration class
 
         Parameters
@@ -69,7 +69,7 @@ class CalibrateSofastFixedDots:
         files_images : list[str]
             File paths to images of Aruco markers and dots
         origin_pts : Vxy
-            Points on the images corresponding to index (0, 0)
+            Points on the images corresponding to index `xy_pts_known`
         camera : Camera
             Camera calibration parameters of camera used to take images
         pts_xyz_corners : Vxyz
@@ -80,6 +80,10 @@ class CalibrateSofastFixedDots:
             Expected min/max x index values (follows screen x axis)
         y_min/y_max : int
             Expected min/max y index values (follows screen y axis)
+        xy_pts_known : tuple[tuple[int, int]]
+            The origin point xy indices. One xy point for each input image.
+            For example, for two images using (0, 0) - xy_pts_known = ((0, 0), (0, 0)).
+            If None, defaults to all zeros.
         """
         # Load images
         self._images: list[ImageMarker] = []
@@ -92,8 +96,12 @@ class CalibrateSofastFixedDots:
             for pt_xyz, pt_id in zip(pts_xyz_corners, pts_ids_corners):
                 im.set_point_id_located(pt_id, pt_xyz.data.squeeze())
 
+        if xy_pts_known is None:
+            xy_pts_known = ((0, 0),) * len(origin_pts)
+
         # Save data
         self._origin_pts = origin_pts
+        self._xy_pts_known = xy_pts_known
         self._camera = camera
         self._pts_xyz_corners = pts_xyz_corners
         self._pts_ids_corners = pts_ids_corners
@@ -131,7 +139,7 @@ class CalibrateSofastFixedDots:
         self._dot_image_points_indices: Vxy
         self._dot_image_points_indices_x: ndarray
         self._dot_image_points_indices_y: ndarray
-        self._dot_points_xyz_mat = np.ndarray((x_max - x_min + 1, y_max - y_min + 1, 3)) * np.nan
+        self._dot_points_xyz_mat = np.ndarray((y_max - y_min + 1, x_max - x_min + 1, 3)) * np.nan
         self._num_dots: int
         self._rots_cams: list[Rotation] = []
         self._vecs_cams: list[Vxyz] = []
@@ -142,7 +150,7 @@ class CalibrateSofastFixedDots:
         dot_image_points_xy_mat = []
         masks_unassigned = []
         for idx_image, origin_pt in enumerate(self._origin_pts):
-            lt.info(f'Finding dots in image: {idx_image:d}')
+            lt.info(f"Finding dots in image: {idx_image:d}")
 
             # Find blobs
             pts = ip.detect_blobs(self._images[idx_image].image, self.blob_detector)
@@ -150,7 +158,9 @@ class CalibrateSofastFixedDots:
             # Index all found points
             blob_index = BlobIndex(pts, -self._x_max, -self._x_min, self._y_min, self._y_max)
             blob_index.search_thresh = self.blob_search_threshold
-            blob_index.run(origin_pt)
+            blob_index.run(
+                origin_pt, x_known=self._xy_pts_known[idx_image][0], y_known=self._xy_pts_known[idx_image][1]
+            )
             points, indices = blob_index.get_data_mat()
 
             # Save points and indices
@@ -186,7 +196,7 @@ class CalibrateSofastFixedDots:
             # Calculate camera pose
             ret = self._images[cam_idx].attempt_calculate_pose()
             if ret == -1:
-                lt.critical_and_raise(ValueError, f'Camera pose {cam_idx:d} not calculated successfully')
+                lt.critical_and_raise(ValueError, f"Camera pose {cam_idx:d} not calculated successfully")
 
             self._rots_cams.append(Rotation.from_rotvec(self._images[cam_idx].rvec))
             self._vecs_cams.append(Vxyz(self._images[cam_idx].tvec))
@@ -194,16 +204,16 @@ class CalibrateSofastFixedDots:
             # Calculate reproj error
             errors = self._images[cam_idx].calc_reprojection_errors()
             # Log errors
-            lt.info(f'Camera {cam_idx:d} mean corner reprojection error: {errors.mean():.2f} pixels')
-            lt.info(f'Camera {cam_idx:d} min corner reprojection error: {errors.min():.2f} pixels')
-            lt.info(f'Camera {cam_idx:d} max corner reprojection error: {errors.mean():.2f} pixels')
-            lt.info(f'Camera {cam_idx:d} STDEV corner reprojection error: {errors.mean():.2f} pixels')
+            lt.info(f"Camera {cam_idx:d} mean corner reprojection error: {errors.mean():.2f} pixels")
+            lt.info(f"Camera {cam_idx:d} min corner reprojection error: {errors.min():.2f} pixels")
+            lt.info(f"Camera {cam_idx:d} max corner reprojection error: {errors.mean():.2f} pixels")
+            lt.info(f"Camera {cam_idx:d} STDEV corner reprojection error: {errors.mean():.2f} pixels")
 
     def _intersect_rays(self) -> None:
         """Intersects camera rays to find dot xyz locations"""
         points_xyz = []
         int_dists = []
-        for dot_idx in tqdm(range(self._num_dots), desc='Intersecting rays'):
+        for dot_idx in tqdm(range(self._num_dots), desc="Intersecting rays"):
             dot_image_pts_xy = [pt[dot_idx] for pt in self._dot_image_points_xy]
             point, dists = ph.triangulate(
                 [self._camera] * self._num_images, self._rots_cams, self._vecs_cams, dot_image_pts_xy
@@ -219,79 +229,79 @@ class CalibrateSofastFixedDots:
 
         self._dot_intersection_dists = np.array(int_dists)
         lt.info(
-            'Dot ray intersections mean intersection error: ' f'{self._dot_intersection_dists.mean() * 1000:.1f} mm'
+            "Dot ray intersections mean intersection error: " f"{self._dot_intersection_dists.mean() * 1000:.1f} mm"
         )
-        lt.info('Dot ray intersections min intersection error: ' f'{self._dot_intersection_dists.min() * 1000:.1f} mm')
-        lt.info('Dot ray intersections max intersection error: ' f'{self._dot_intersection_dists.max() * 1000:.1f} mm')
+        lt.info("Dot ray intersections min intersection error: " f"{self._dot_intersection_dists.min() * 1000:.1f} mm")
+        lt.info("Dot ray intersections max intersection error: " f"{self._dot_intersection_dists.max() * 1000:.1f} mm")
         lt.info(
-            'Dot ray intersections STDEV of intersection error: ' f'{self._dot_intersection_dists.std() * 1000:.1f} mm'
+            "Dot ray intersections STDEV of intersection error: " f"{self._dot_intersection_dists.std() * 1000:.1f} mm"
         )
 
     def _plot_common_dots(self) -> None:
         """Plots common dots on images"""
         for idx_image in range(self._num_images):
-            fig = plt.figure(f'image_{idx_image:d}_annotated_dots')
-            plt.imshow(self._images[idx_image].image, cmap='gray')
-            plt.scatter(*self._dot_image_points_xy[idx_image].data, marker='.', color='red')
+            fig = plt.figure(f"image_{idx_image:d}_annotated_dots")
+            plt.imshow(self._images[idx_image].image, cmap="gray")
+            plt.scatter(*self._dot_image_points_xy[idx_image].data, marker=".", color="red")
             self.figures.append(fig)
 
     def _plot_marker_corners(self) -> None:
         """Plots images with annotated marker corners"""
         for idx_image in range(self._num_images):
-            fig = plt.figure(f'image_{idx_image:d}_annotated_marker_corners')
+            fig = plt.figure(f"image_{idx_image:d}_annotated_marker_corners")
             ax = fig.gca()
-            ax.imshow(self._images[idx_image].image, cmap='gray')
+            ax.imshow(self._images[idx_image].image, cmap="gray")
             Vxy(self._images[idx_image].pts_im_xy.T).draw(ax=ax)
             self.figures.append(fig)
 
     def _plot_located_cameras_and_points(self) -> None:
         """Plots all input xyz points and located cameras"""
-        fig = plt.figure('cameras_and_points')
-        ax = fig.add_subplot(111, projection='3d')
+        fig = plt.figure("cameras_and_points")
+        ax = fig.add_subplot(111, projection="3d")
         ph.plot_pts_3d(ax, self._pts_xyz_corners.data.T, self._rots_cams, self._vecs_cams)
-        ax.set_xlabel('x (meter)')
-        ax.set_ylabel('y (meter)')
-        ax.set_zlabel('z (meter)')
-        ax.set_title('Located Cameras and Marker Corners')
+        ax.set_xlabel("x (meter)")
+        ax.set_ylabel("y (meter)")
+        ax.set_zlabel("z (meter)")
+        ax.set_title("Located Cameras and Marker Corners")
         self.figures.append(fig)
 
     def _plot_intersection_distances(self) -> None:
         """Plots mean intersection distances"""
-        fig = plt.figure('dot_ray_mean_intersection_distances')
+        fig = plt.figure("dot_ray_mean_intersection_distances")
         plt.plot(self._dot_intersection_dists.mean(axis=1) * 1000)
-        plt.axhline(self.intersection_threshold * 1000, color='k')
-        plt.xlabel('Dot Number')
-        plt.ylabel('Mean Intersection Distance (mm)')
-        plt.grid('on')
+        plt.axhline(self.intersection_threshold * 1000, color="k")
+        plt.xlabel("Dot Number")
+        plt.ylabel("Mean Intersection Distance (mm)")
+        plt.grid("on")
         self.figures.append(fig)
 
     def _plot_xyz_surface(self) -> None:
         """Plots xyz dot structure"""
-        fig = plt.figure('xyz_dot_map')
+        fig = plt.figure("xyz_dot_map")
         xs = self._dot_points_xyz_mat[..., 0]
         ys = self._dot_points_xyz_mat[..., 1]
         zs = self._dot_points_xyz_mat[..., 2]
-        plt.scatter(xs, ys, c=zs, marker='o')
+        plt.scatter(xs, ys, c=zs, marker="o")
         cb = plt.colorbar()
-        cb.set_label('Z height (meter)')
-        plt.xlabel('x (meter)')
-        plt.ylabel('y (meter)')
-        plt.title('XYZ Dot Map')
+        cb.set_label("Z height (meter)")
+        plt.xlabel("x (meter)")
+        plt.ylabel("y (meter)")
+        plt.title("XYZ Dot Map")
         self.figures.append(fig)
 
     def _plot_xyz_indices(self) -> None:
         """Plots z value per dot on grid"""
-        fig = plt.figure('dot_index_map')
+        fig = plt.figure("dot_index_map")
         plt.imshow(
             self._dot_points_xyz_mat[..., 2],
             extent=(self._x_min - 0.5, self._x_max + 0.5, self._y_min - 0.5, self._y_max + 0.5),
-            origin='lower',
+            origin="lower",
         )
         cb = plt.colorbar()
-        cb.set_label('Z height (meter)')
-        plt.xlabel('x index')
-        plt.ylabel('y index')
-        plt.title('Dot Index Map')
+        cb.set_label("Z height (meter)")
+        plt.xlabel("x index")
+        plt.ylabel("y index")
+        plt.title("Dot Index Map")
         self.figures.append(fig)
 
     def get_data(self) -> tuple[ndarray, ndarray, ndarray]:
@@ -317,8 +327,8 @@ class CalibrateSofastFixedDots:
     def save_figures(self, dir_save: str) -> None:
         """Saves figures in given directory"""
         for fig in self.figures:
-            file = os.path.join(dir_save, fig.get_label() + '.png')
-            lt.info(f'Saving figure to file: {file:s}')
+            file = os.path.join(dir_save, fig.get_label() + ".png")
+            lt.info(f"Saving figure to file: {file:s}")
             fig.savefig(file)
 
     def run(self) -> None:

@@ -1,22 +1,44 @@
+import numbers
+from typing import Union
+
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 
+import opencsp.common.lib.geometry.angle as geo_angle
+import opencsp.common.lib.tool.log_tools as lt
+
 
 class Vxy:
-    def __init__(self, data, dtype=float):
+    """
+    A class to represent 2D points or vectors.
+
+    This class allows for the creation and manipulation of 2D vectors,
+    including operations such as addition, subtraction, scaling,
+    normalization, rotation, and dot/cross products.
+
+    The vectors can be initialized from various data formats, including
+    NumPy arrays, tuples, lists, or other instances of the Vxy class.
+    """
+
+    # "ChatGPT 4o-mini" assisted with generating this docstring.
+    def __init__(self, data_in: Union[np.ndarray, tuple[float, float], tuple[list, list], "Vxy"], dtype=float):
         """
         2D vector class to represent 2D points/vectors.
 
-        To represent a single vector::
+        To represent a single vector:
+
+        .. code-block:: python
 
             x = 1
             y = 2
-            vec = Vxy(np.array([[x], [y])) # same as vec = Vxy([x, y])
+            vec = Vxy(np.array([[x], [y]]) # same as vec = Vxy([x, y])
             print(vec.x) # [1.]
             print(vec.y) # [2.]
 
-        To represent a set of vectors::
+        To represent a set of vectors:
+
+        .. code-block:: python
 
             vec1 = [1, 2]
             vec2 = [4, 5]
@@ -33,24 +55,27 @@ class Vxy:
 
         Parameters
         ----------
-        data : array-like
+        data_in : array-like
             The 2d point data: 2xN array, length 2 tuple, length 2 list
         dtype : data type, optional
             Data type. The default is float.
 
         """
         # Check input shape
-        if type(data) is np.ndarray:
-            data = data.squeeze()
-            if np.ndim(data) not in [1, 2]:
-                raise ValueError('Input data must have 1 or 2 dimensions if ndarray.')
-            elif np.ndim(data) == 2 and data.shape[0] != 2:
-                raise ValueError('First dimension of 2-dimensional data must be length 2 if ndarray.')
-        elif len(data) != 2:
-            raise ValueError('Input data must have length 2.')
+        data_tmp = data_in
+        if isinstance(data_in, Vxy):
+            data_tmp = data_in.data
+        if type(data_tmp) is np.ndarray:
+            data_tmp = data_tmp.squeeze()
+            if np.ndim(data_tmp) not in [1, 2]:
+                raise ValueError("Input data must have 1 or 2 dimensions if ndarray.")
+            elif np.ndim(data_tmp) == 2 and data_tmp.shape[0] != 2:
+                raise ValueError("First dimension of 2-dimensional data must be length 2 if ndarray.")
+        elif len(data_tmp) != 2:
+            raise ValueError("Input data must have length 2.")
 
         # Save and format data
-        self._data = np.array(data, dtype=dtype).reshape((2, -1))
+        self._data = np.array(data_tmp, dtype=dtype).reshape((2, -1))
 
     @property
     def data(self):
@@ -65,15 +90,47 @@ class Vxy:
 
     @property
     def x(self):
+        """The x-coordinates of the vectors."""
         return self._data[0, :]
 
     @property
     def y(self):
+        """The y-coordinates of the vectors."""
         return self._data[1, :]
 
     @classmethod
     def _from_data(cls, data, dtype=float):
         return cls(data, dtype)
+
+    @classmethod
+    def from_list(cls, vals: list["Vxy"]):
+        """Builds a single Vxy instance from a list of Vxy instances."""
+        xs, ys = [], []
+        for val in vals:
+            xs += val.x.tolist()
+            ys += val.y.tolist()
+        return cls((xs, ys))
+
+    @classmethod
+    def from_numpy_coords(cls, yx_coords: tuple[np.ndarray, np.ndarray]):
+        """Builds a Vxy instance from numpy coordinates, such as those returned by np.where(arr == 0)."""
+        if len(yx_coords) != 2:
+            lt.error_and_raise(
+                ValueError,
+                "Error in Vxy.from_numpy_yx_coords(): "
+                + f"expected yx_coords to be of length 2, but "
+                + "{len(yx_coords)=}.",
+            )
+        if not isinstance(yx_coords[0], np.ndarray) or not isinstance(yx_coords[1], np.ndarray):
+            lt.error_and_raise(
+                TypeError,
+                "Error in Vxy.from_numpy_yx_coords(): "
+                + f"expected yx_coords to contain numpy arrays, but "
+                + f"{type(yx_coords[0])=} and {type(yx_coords[1])=}.",
+            )
+
+        xy_coords = [yx_coords[1], yx_coords[0]]
+        return cls._from_data(xy_coords)
 
     def _check_is_Vxy(self, v_in):
         """
@@ -82,7 +139,7 @@ class Vxy:
 
         """
         if not isinstance(v_in, Vxy):
-            raise TypeError('Input operand must be {}, not {}'.format(Vxy, type(v_in)))
+            raise TypeError("Input operand must be {}, not {}".format(Vxy, type(v_in)))
 
     def __add__(self, v_in):
         """
@@ -109,17 +166,30 @@ class Vxy:
         elif type(data_in) is np.ndarray:
             return self._from_data(self._data * data_in)
         else:
-            raise TypeError('Vxy cannot be multipled by type, {}.'.format(type(data_in)))
+            raise TypeError("Vxy cannot be multipled by type, {}.".format(type(data_in)))
+
+    def __truediv__(self, data_in):
+        """
+        Element wise division. Operand 1 type must be int, float, or Vxy.
+        """
+        if type(data_in) in [int, float, np.float32, np.float64]:
+            return self._from_data(self._data / data_in)
+        elif isinstance(data_in, Vxy):
+            return self._from_data(self._data / data_in.data)
+        elif type(data_in) is np.ndarray:
+            return self._from_data(self._data / data_in)
+        else:
+            raise TypeError('Vxy cannot be divided by type, {}.'.format(type(data_in)))
 
     def __getitem__(self, key):
         # Check that only one dimension is being indexed
         if np.size(key) > 1 and any(isinstance(x, slice) for x in key):
-            raise ValueError('Can only index over one dimension.')
+            raise ValueError("Can only index over one dimension.")
 
         return self._from_data(self._data[:, key], dtype=self.dtype)
 
     def __repr__(self):
-        return '2D Vector:\n' + self._data.__repr__()
+        return "2D Vector:\n" + self._data.__repr__()
 
     def __len__(self):
         return self._data.shape[1]
@@ -140,7 +210,7 @@ class Vxy:
         mag = self.magnitude()
 
         if np.any(mag == 0):
-            raise ValueError('Vector contains zero vector, cannot normalize.')
+            raise ValueError("Vector contains zero vector, cannot normalize.")
 
         return mag
 
@@ -176,6 +246,23 @@ class Vxy:
 
         """
         return np.sqrt(np.sum(self._data**2, 0))
+
+    def angle(self) -> npt.NDArray[np.float_]:
+        """
+        Returns the orientation relative to the origin for each vector, in
+        radians in the standard coordinate system (0 on the x-axis to the right,
+        positive counter-clockwise).
+
+        Returns
+        -------
+        np.ndarray
+            Length n ndarray of vector angles in the range 0-2pi.
+        """
+        xy_as_complex = np.array([complex(xv, yv) for xv, yv in zip(self.x, self.y)])
+        angles = np.angle(xy_as_complex)
+        normalized = geo_angle.normalize(angles)
+
+        return normalized
 
     def rotate(self, R: np.ndarray):
         """
@@ -232,9 +319,9 @@ class Vxy:
         """
         # Check inputs
         if type(R) is not np.ndarray:
-            raise TypeError('Rotation must be type ndarray, not {}'.format(type(R)))
+            raise TypeError("Rotation must be type ndarray, not {}".format(type(R)))
         if R.shape != (2, 2):
-            raise ValueError('Rotation matrix must be shape (2, 2), not {}'.format(R.shape))
+            raise ValueError("Rotation matrix must be shape (2, 2), not {}".format(R.shape))
 
         self._data = R @ self._data
 
@@ -313,7 +400,7 @@ class Vxy:
 
         return ax
 
-    def concatenate(self, V: 'Vxy') -> 'Vxy':
+    def concatenate(self, V: "Vxy") -> "Vxy":
         """Concatenates Vxy to end of current vector.
 
         Parameters
@@ -331,7 +418,7 @@ class Vxy:
         return Vxy(np.array([x, y]))
 
     @classmethod
-    def merge(cls, v_list: list['Vxy']) -> 'Vxy':
+    def merge(cls, v_list: list["Vxy"]) -> "Vxy":
         """Merges list of multiple Vxy objects into one Vxy.
 
         Parameters
@@ -349,3 +436,45 @@ class Vxy:
 
         data = np.concatenate([v_i.data for v_i in v_list], 1)
         return cls(data)
+
+    def astuple(self) -> tuple[numbers.Number, numbers.Number]:
+        """Get this instance as a tuple (x, y). Only works for single-value vectors.
+
+        Raises:
+        -------
+        RuntimeError:
+            This vector has more than one value.
+        """
+        if len(self) > 1:
+            lt.error_and_raise(
+                RuntimeError,
+                "Error in Vxy.astuple(): " + f"can't convert a Vxy with {len(self)} sets of values to a single tuple",
+            )
+        return self.x[0], self.y[0]
+
+    def asindex(self, axis_order="xy") -> tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]]:
+        """
+        Returns the x and y values as integer arrays. This allows for indexing
+        of a numpy array as follows::
+
+            arr_val[vxy_val.asindex()]
+
+        For example, to get an array of 1s at each of the vxy_val coordinates::
+
+            binary_image = np.zeros((np.max(vxy_val.y), np.max(vxy_val.x)), dtype=np.uint8)
+            binary_image[vxy_val.asindex('yx')] = 1
+
+        In this type of usage, the 'x' values will be used for the first index,
+        and the 'y' values will be used for the second index. For example:
+
+            arr_val = np.array([ [0, 1, 2], [3, 4, 5], [6, 7, 8] ])
+            vxy_val = Vxy(([0, 1, 2], [0, 1, 0]))
+            print(arr_val[desired_indexes.asindex()])
+            # [0, 4, 6]
+        """
+        indexes = {"x": self.x.astype(np.int64), "y": self.y.astype(np.int64)}
+
+        ret = []
+        for axis in axis_order:
+            ret.append(indexes[axis])
+        return tuple(ret)

@@ -3,14 +3,14 @@ import dataclasses
 from opencsp.common.lib.cv.CacheableImage import CacheableImage
 from opencsp.common.lib.cv.spot_analysis.SpotAnalysisOperable import SpotAnalysisOperable
 from opencsp.common.lib.cv.spot_analysis.image_processor.AbstractSpotAnalysisImageProcessor import (
-    AbstractSpotAnalysisImagesProcessor,
+    AbstractSpotAnalysisImageProcessor,
 )
 import opencsp.common.lib.opencsp_path.opencsp_root_path as orp
 import opencsp.common.lib.tool.file_tools as ft
 import opencsp.common.lib.tool.log_tools as lt
 
 
-class CroppingImageProcessor(AbstractSpotAnalysisImagesProcessor):
+class CroppingImageProcessor(AbstractSpotAnalysisImageProcessor):
     """
     Crops all input images to the given shape. If the input image is too small, then an error will be thrown.
     """
@@ -58,7 +58,7 @@ class CroppingImageProcessor(AbstractSpotAnalysisImagesProcessor):
             lt.error_and_raise(
                 ValueError,
                 "Error in CroppingImageProcessor._execute(): "
-                + f"given image '{operable.primary_image_source_path}' is smaller than the cropped size {self.cropped_size_str}",
+                + f"given image '{operable.best_primary_pathnameext}' is smaller than the cropped size {self.cropped_size_str}",
             )
 
         # create the cropped image

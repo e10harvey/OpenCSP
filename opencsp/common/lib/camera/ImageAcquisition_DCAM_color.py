@@ -9,7 +9,7 @@ import opencsp.common.lib.tool.log_tools as lt
 
 
 class ImageAcquisition(ImageAcquisitionAbstract):
-    def __init__(self, instance: int = 0, pixel_format: str = 'BayerRG12'):
+    def __init__(self, instance: int = 0, pixel_format: str = "BayerRG12"):
         """
         Class to control a Basler DCAM color camera. Grabs one frame
         at a time. Assumes the color camera is in a Bayer pattern. The
@@ -34,19 +34,19 @@ class ImageAcquisition(ImageAcquisitionAbstract):
 
         # Check that at least one camera is available
         if len(devices) == 0:
-            raise pylon.RuntimeException('No cameras found.')
+            raise pylon.RuntimeException("No cameras found.")
         else:
-            print(f'{len(devices):d} devices found.')
+            print(f"{len(devices):d} devices found.")
             for idx, device in enumerate(devices):
                 if idx == instance:
-                    print('--> ', end='')
+                    print("--> ", end="")
                 else:
-                    print('    ', end='')
+                    print("    ", end="")
                 print(device.GetFriendlyName())
 
         # Check number of instances
         if instance >= len(devices):
-            raise ValueError(f'Cannot load instance {instance:d}. Only {len(devices):d} devices found.')
+            raise ValueError(f"Cannot load instance {instance:d}. Only {len(devices):d} devices found.")
 
         # Connect to camera
         self.basler_index = instance
@@ -62,7 +62,7 @@ class ImageAcquisition(ImageAcquisitionAbstract):
         super().__init__()
 
         # Set up device to single frame acquisition
-        self.cap.AcquisitionMode.SetValue('SingleFrame')
+        self.cap.AcquisitionMode.SetValue("SingleFrame")
 
         # Set pixel format
         self.cap.PixelFormat.SetValue(pixel_format)
@@ -76,14 +76,61 @@ class ImageAcquisition(ImageAcquisitionAbstract):
         self._shutter_cal_values = np.linspace(shutter_min, shutter_max, 2**13).astype(int)
 
     def instance_matches(self, possible_matches: list[ImageAcquisitionAbstract]) -> bool:
+        """
+        Determine whether this camera instance matches any instance in the provided list.
+
+        This method checks if there is another camera instance in the `possible_matches`
+        list that has the same `basler_index` as the current instance.
+
+        Parameters
+        ----------
+        possible_matches : list[ImageAcquisitionAbstract]
+            A list of camera instances to check against. Each instance should be of
+            type `ImageAcquisitionAbstract` and may have a `basler_index` attribute.
+
+        Returns
+        -------
+        bool
+            True when the first matching instance is found; False otherwise.
+        """
+        # "ChatGPT 4o-mini" assisted with generating this docstring.
         for camera in possible_matches:
-            if not hasattr(camera, 'basler_index'):
+            if not hasattr(camera, "basler_index"):
                 continue
-            if getattr(camera, 'basler_index') == self.basler_index:
+            if getattr(camera, "basler_index") == self.basler_index:
                 return True
         return False
 
     def get_frame(self, encode: bool = True) -> np.ndarray:
+        """
+        Captures a single frame from the camera.
+
+        This method initiates the frame capture process and retrieves the image data
+        from the camera. The captured image can be returned in its raw Bayer format
+        or converted to an RGB format based on the `encode` parameter.
+
+        Parameters
+        ----------
+        encode : bool, optional
+            If True (default), the captured Bayer-encoded image will be converted to
+            a 3D RGB image using the `encode_RG_to_RGB` function. If False, the raw
+            Bayer-encoded image will be returned.
+
+        Returns
+        -------
+        np.ndarray
+            The captured image as a NumPy array. The shape of the array will depend
+            on the encoding:
+            - If `encode` is True, the shape will be (height, width, 3) for RGB images.
+            - If `encode` is False, the shape will be (height, width) for Bayer images.
+
+        Raises
+        ------
+        pylon.RuntimeException
+            If the frame grab is unsuccessful, an exception is raised indicating the
+            failure to capture the frame.
+        """
+        # "ChatGPT 4o-mini" assisted with generating this docstring.
         # Start frame capture
         self.cap.StartGrabbingMax(1)
         grabResult = self.cap.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
@@ -92,7 +139,7 @@ class ImageAcquisition(ImageAcquisitionAbstract):
         if grabResult.GrabSucceeded():
             img = grabResult.Array
         else:
-            raise pylon.RuntimeException('Frame grab unsuccessful.')
+            raise pylon.RuntimeException("Frame grab unsuccessful.")
 
         # Wait for capturing to finish
         grabResult.Release()
@@ -147,6 +194,7 @@ class ImageAcquisition(ImageAcquisitionAbstract):
         return self._shutter_cal_values
 
     def close(self):
+        """Closes the camera connection"""
         with et.ignored(Exception):
             super().close()
         with et.ignored(Exception):

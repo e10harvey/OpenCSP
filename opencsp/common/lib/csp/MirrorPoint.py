@@ -1,7 +1,3 @@
-"""Mirror class representing mirrors with scattered surface point
-locations.
-"""
-
 from typing import Literal
 from warnings import warn
 
@@ -22,36 +18,42 @@ from opencsp.common.lib.render_control.RenderControlMirror import RenderControlM
 
 
 class MirrorPoint(MirrorAbstract):
+    """
+    A class representing a mirror defined by discrete, scattered surface points and corresponding normal vectors.
+
+    This class allows for the representation of a mirror's surface using a set of points and their associated
+    normal vectors, with options for interpolation methods to define the surface behavior.
+    """
+
+    # "ChatGPT 4o-mini" assisted with generating this docstring.
+
     def __init__(
         self,
         surface_points: Pxyz,
         normal_vectors: Uxyz,
         shape: RegionXY,
-        interpolation_type: Literal['given', 'bilinear', 'clough_tocher', 'nearest'] = 'nearest',
+        interpolation_type: Literal["given", "bilinear", "clough_tocher", "nearest"] = "nearest",
     ) -> None:
-        """Class representing a mirror defined by discrete, scattered points
-        and corresponding normal vectors.
+        """
+        Initializes a MirrorPoint object with the specified surface points and normal vectors.
 
         Parameters
         ----------
         surface_points : Pxyz
-            XYZ points on surface of mirror
+            The XYZ coordinates of points on the surface of the mirror.
         normal_vectors : Uxyz
-            XYZ normal vectors corresponding to surface_points
-        interpolation_type : str
-            Interpolation type:
-                - 'given' - Uses given XY points in look-up table
-                - 'bilinear' - bilinear interpolation
-                - 'clough_tocher' - Clough-Tocher interpolation
-                - 'nearest' - nearest neighbor interpolation
+            The XYZ normal vectors corresponding to the surface points.
         shape : RegionXY
-            XY outline of mirror
+            The XY outline of the mirror.
+        interpolation_type : Literal['given', 'bilinear', 'clough_tocher', 'nearest'], optional
+            The type of interpolation to use for the surface and normal vectors (default is 'nearest').
 
         Raises
         ------
         ValueError
-            If not all normal vectors have a positive z component
+            If not all normal vectors have a positive z component.
         """
+        # "ChatGPT 4o-mini" assisted with generating this docstring.
         super().__init__(shape)  # initalizes the attributes universal to all mirrors
 
         # Save surface points and normal vectors
@@ -67,7 +69,7 @@ class MirrorPoint(MirrorAbstract):
         self._define_interpolation(interpolation_type)
 
     def _define_interpolation(
-        self, interpolation_type: Literal['given', 'bilinear', 'clough_tocher', 'nearest']
+        self, interpolation_type: Literal["given", "bilinear", "clough_tocher", "nearest"]
     ) -> None:
         """Defines the interpolation type to use
 
@@ -86,7 +88,7 @@ class MirrorPoint(MirrorAbstract):
             If given interpolation type is not supported.
         """
         # Interpolate
-        if interpolation_type == 'bilinear':
+        if interpolation_type == "bilinear":
             # Z coordinate interpolation object
             points_xy = self.surface_points.projXY().data.T  # Nx2 array
             Z = self.surface_points.z
@@ -94,7 +96,7 @@ class MirrorPoint(MirrorAbstract):
             # Normal vector interpolation object
             Z_N = self.normal_vectors.data.T
             self.normals_function = interp.LinearNDInterpolator(points_xy, Z_N, np.nan)
-        elif interpolation_type == 'clough_tocher':
+        elif interpolation_type == "clough_tocher":
             # Z coordinate interpolation object
             points_xy = self.surface_points.projXY().data.T  # Nx2 array
             Z = self.surface_points.z
@@ -102,7 +104,7 @@ class MirrorPoint(MirrorAbstract):
             # Normal vector interpolation object
             Z_N = self.normal_vectors.data.T
             self.normals_function = interp.CloughTocher2DInterpolator(points_xy, Z_N, np.nan)
-        elif interpolation_type == 'nearest':
+        elif interpolation_type == "nearest":
             # Z coordinate interpolation object
             points_xy = self.surface_points.projXY().data.T  # Nx2 array
             Z = self.surface_points.z
@@ -110,7 +112,7 @@ class MirrorPoint(MirrorAbstract):
             # Normal vector interpolatin object
             Z_N = self.normal_vectors.data.T
             self.normals_function = interp.NearestNDInterpolator(points_xy, Z_N)
-        elif interpolation_type == 'given':
+        elif interpolation_type == "given":
             # Z coordinate lookup function
             points_lookup = {
                 (x, y): z for x, y, z in zip(self.surface_points.x, self.surface_points.y, self.surface_points.z)
@@ -137,19 +139,75 @@ class MirrorPoint(MirrorAbstract):
             raise ValueError("Not all points are within mirror perimeter.")
 
     def surface_norm_at(self, p: Pxy) -> Vxyz:
+        """
+        Retrieves the surface normal vector at a specified point.
+
+        Parameters
+        ----------
+        p : Pxy
+            The point at which to retrieve the surface normal.
+
+        Returns
+        -------
+        Vxyz
+            The normalized surface normal vector at the specified point.
+
+        Raises
+        ------
+        ValueError
+            If the point is not within the bounds of the mirror.
+        """
+        # "ChatGPT 4o-mini" assisted with generating this docstring.
         self._check_in_bounds(p)
         pts = self.normals_function(p.x, p.y)
         return Vxyz(pts.T).normalize()
 
     def surface_displacement_at(self, p: Pxy) -> np.ndarray:
+        """
+        Retrieves the surface displacement at a specified point.
+
+        Parameters
+        ----------
+        p : Pxy
+            The point at which to retrieve the surface displacement.
+
+        Returns
+        -------
+        np.ndarray
+            The displacement of the surface at the specified point.
+
+        Raises
+        ------
+        ValueError
+            If the point is not within the bounds of the mirror.
+        """
+        # "ChatGPT 4o-mini" assisted with generating this docstring.
         self._check_in_bounds(p)
         return self.surface_function(p.x, p.y)
 
     def survey_of_points(
         self, resolution: int = 1, resolution_type: str = "pixelX", random_seed: int | None = None
     ) -> tuple[Pxyz, Vxyz]:
+        """
+        Surveys points on the mirror surface and retrieves their positions and normals.
+
+        Parameters
+        ----------
+        resolution : int, optional
+            The resolution for sampling points on the mirror surface (default is 1).
+        resolution_type : str, optional
+            The type of resolution to use (default is "pixelX").
+        random_seed : int or None, optional
+            A seed for random number generation (default is None).
+
+        Returns
+        -------
+        tuple[Pxyz, Vxyz]
+            A tuple containing the sampled points and their corresponding normal vectors.
+        """
+        # "ChatGPT 4o-mini" assisted with generating this docstring.
         # If using "given" type samping
-        if self.interpolation_type == 'given':
+        if self.interpolation_type == "given":
             if resolution_type != "given":
                 warn(
                     "Resolution type becomes 'given' when using type 'given' interpolation.", UserWarning, stacklevel=2
@@ -160,13 +218,30 @@ class MirrorPoint(MirrorAbstract):
 
         # If surface is interpolated, sample using MirrorAbstact method
         else:
-            points, normals = super().survey_of_points(resolution, resolution_type, random_seed)
+            points, normals = super().survey_of_points(resolution)
 
         return points, normals
 
     def draw(self, view: View3d, mirror_style: RenderControlMirror, transform: TransformXYZ | None = None) -> None:
+        """
+        Draws the mirror in a 3D view.
+
+        Parameters
+        ----------
+        view : View3d
+            The 3D view in which to draw the mirror.
+        mirror_style : RenderControlMirror
+            The style settings for rendering the mirror.
+        transform : TransformXYZ or None, optional
+            A transformation to apply to the mirror when drawing (default is None).
+
+        Returns
+        -------
+        None
+        """
+        # "ChatGPT 4o-mini" assisted with generating this docstring.
         # If no interpolation
-        if self.interpolation_type == 'given':
+        if self.interpolation_type == "given":
             resolution = mirror_style.resolution
             edge_values = self.region.edge_sample(resolution)
             if transform is None:
@@ -176,7 +251,7 @@ class MirrorPoint(MirrorAbstract):
             p_space = self.location_in_space(domain)
 
             # Draw sample points
-            view.draw_single_Pxyz(p_space, style=mirror_style.point_styles)
+            p_space.draw_points(view, style=mirror_style.point_styles)
 
             # Calculate z height of boundary to draw (lowest z value)
             min_val = min(self.surface_displacement_at(domain))
@@ -189,7 +264,7 @@ class MirrorPoint(MirrorAbstract):
             if mirror_style.point_styles is not None:
                 edge_style = mirror_style.point_styles
                 edge_style.markersize = 0
-                view.draw_Vxyz(edge_values_lifted, style=edge_style)
+                edge_values_lifted.draw_line(view, style=edge_style)
 
             # Draw surface normals
             if mirror_style.surface_normals:

@@ -16,25 +16,29 @@ from opencsp.common.lib.tool import hdf5_tools
 
 
 class Camera:
+    """
+    Calibrated machine vision camera representation. This represents a pinhole model of
+    a camera/lens assembly and includes lens distortion through the use of distortion
+    coefficients. This model uses the distortion model used by OpenCV; see
+    https://docs.opencv.org/4.9.0/d9/d0c/group__calib3d.html for more information.
+
+    Parameters
+    ----------
+    intrinsic_mat : np.ndarray
+        3x3 numpy array, intrinsic camera matrix
+    distortion_coef : np.ndarray
+        1d array, distortion coefficients, typically length 4.
+    image_shape_xy : tuple(int)
+        (x, y), image size in pixels.
+    name : str
+        Name of camera/lens combination.
+    """
+
     def __init__(
         self, intrinsic_mat: np.ndarray, distortion_coef: np.ndarray, image_shape_xy: tuple[int, int], name: str
     ):
-        """
-        Calibrated machine vision camera representation.
-
-        Parameters
-        ----------
-        intrinsic_mat : np.ndarray
-        distortion_coef : np.ndarray
-            1d array, distortion coefficients.
-        image_shape_xy : tuple(int)
-            (x, y), image size in pixels.
-        name : str
-            Name of camera/lens combination.
-
-        """
         if intrinsic_mat.shape[0] != 3 or intrinsic_mat.shape[1] != 3 or np.ndim(intrinsic_mat) != 2:
-            raise ValueError('Input intrinsic_mat must be a 3x3 ndarray.')
+            raise ValueError("Input intrinsic_mat must be a 3x3 ndarray.")
 
         self.intrinsic_mat = intrinsic_mat
         self.distortion_coef = distortion_coef
@@ -43,7 +47,7 @@ class Camera:
 
     def __repr__(self):
         """Returns the defined camera name"""
-        return 'Camera: { ' + str(self.name) + ' }'
+        return "Camera: { " + str(self.name) + " }"
 
     @property
     def image_shape_yx(self):
@@ -126,7 +130,7 @@ class Camera:
             HDF5 file to load
 
         """
-        datasets = ['Camera/intrinsic_mat', 'Camera/distortion_coef', 'Camera/image_shape_xy', 'Camera/name']
+        datasets = ["Camera/intrinsic_mat", "Camera/distortion_coef", "Camera/image_shape_xy", "Camera/name"]
         kwargs = hdf5_tools.load_hdf5_datasets(datasets, file)
 
         return cls(**kwargs)
@@ -141,6 +145,6 @@ class Camera:
             HDF5 file to save
 
         """
-        datasets = ['Camera/intrinsic_mat', 'Camera/distortion_coef', 'Camera/image_shape_xy', 'Camera/name']
+        datasets = ["Camera/intrinsic_mat", "Camera/distortion_coef", "Camera/image_shape_xy", "Camera/name"]
         data = [self.intrinsic_mat, self.distortion_coef, self.image_shape_xy, self.name]
         hdf5_tools.save_hdf5_datasets(data, datasets, file)
